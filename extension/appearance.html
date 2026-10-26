@@ -13,7 +13,7 @@
   <!-- Header -->
   <header class="app-header">
     <div class="header-brand">
-      <div class="brand-logo">
+      <div class="brand-logo" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <circle cx="9" cy="11" r="6" stroke="url(#lg1)" stroke-width="2.5"/>
           <circle cx="15" cy="13" r="6" stroke="url(#lg2)" stroke-width="2.5"/>
@@ -29,12 +29,12 @@
       </div>
       <div class="brand-text">
         <span class="brand-name">ContextLens</span>
-        <span class="brand-tagline">Appearance &amp; Personalization</span>
+        <span class="brand-tagline">Theme &amp; Appearance</span>
       </div>
     </div>
     <div class="header-actions">
-      <button id="btn-back-sidepanel" class="icon-btn" title="Back to ContextLens">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <button id="btn-back-sidepanel" class="icon-btn" title="Back to ContextLens Workspace" aria-label="Back to workspace">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="15 18 9 12 15 6"/>
         </svg>
       </button>
@@ -42,324 +42,170 @@
   </header>
 
   <!-- Appearance Body -->
-  <div class="appear-layout">
+  <main class="appear-layout" role="main">
 
-    <!-- LEFT: Controls -->
-    <div class="appear-controls-col">
+    <!-- LEFT COLUMN: Theme Selection & Motion Preferences -->
+    <section class="appear-controls-col" aria-label="Theme Selection">
 
-      <!-- Section: Presets -->
-      <section class="appear-section" id="section-presets">
-        <div class="appear-section-title">
-          <span>🎯</span> Quick Presets
+      <!-- Section: Lavender Default Theme -->
+      <div class="appear-section" id="section-default-theme">
+        <div class="section-title-row">
+          <h2 class="appear-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"/>
+              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+            </svg>
+            Default Theme
+          </h2>
+          <span class="theme-default-badge">DEFAULT</span>
         </div>
-        <p class="appear-section-desc">One-click starting configurations for different workflows.</p>
-        <div class="presets-grid" id="presets-grid">
-          <!-- Rendered by JS -->
+        <p class="appear-section-desc">Minimalist light lavender interface featuring frosted translucent glass, delicate lilac gradients, and ambient purple glow.</p>
+
+        <div class="default-theme-container" id="theme-gallery-default">
+          <!-- Rendered dynamically by appearance.js -->
         </div>
-      </section>
+      </div>
 
-      <!-- Section: Theme Gallery -->
-      <section class="appear-section" id="section-themes">
-        <div class="appear-section-title">
-          <span>🎨</span> Theme Gallery
+      <!-- Section: Curated Themes Gallery -->
+      <div class="appear-section" id="section-dark-themes">
+        <div class="section-title-row">
+          <h2 class="appear-section-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+            </svg>
+            Curated Themes Gallery
+          </h2>
+          <span class="theme-count-tag">6 Themes</span>
         </div>
-        <p class="appear-section-desc">Select a coordinated color palette for the interface.</p>
+        <p class="appear-section-desc">Rich glassmorphic themes inspired by modern interface designs and expressive color palettes.</p>
 
-        <div class="theme-category-label">Dark Themes</div>
-        <div class="theme-gallery" id="theme-gallery-dark"><!-- Rendered by JS --></div>
+        <div class="dark-theme-grid" id="theme-gallery-dark" role="radiogroup" aria-label="Curated themes">
+          <!-- Rendered dynamically by appearance.js -->
+        </div>
+      </div>
 
-        <div class="theme-category-label mt-8">Light Themes</div>
-        <div class="theme-gallery" id="theme-gallery-light"><!-- Rendered by JS --></div>
+      <!-- Section: Accessibility & Motion Preferences -->
+      <div class="appear-section" id="section-accessibility">
+        <h2 class="appear-section-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+            <line x1="16" y1="8" x2="2" y2="22"/>
+            <line x1="17.5" y1="15" x2="9" y2="15"/>
+          </svg>
+          Accessibility &amp; Motion
+        </h2>
+        <p class="appear-section-desc">Configure visual motion comfort across all ContextLens extension surfaces.</p>
 
-        <div class="theme-category-label mt-8">Accessibility</div>
-        <div class="theme-gallery" id="theme-gallery-accessibility"><!-- Rendered by JS --></div>
-
-        <div id="custom-themes-section">
-          <div class="theme-category-label mt-8">My Custom Themes</div>
-          <div class="theme-gallery" id="theme-gallery-custom"><!-- Rendered by JS --></div>
-          <div id="custom-themes-empty" class="empty-state-sm hidden">
-            <div class="empty-text">No custom themes saved yet.</div>
-            <div class="empty-sub">Save your color edits below as a named theme.</div>
+        <div class="motion-toggle-card">
+          <div class="motion-toggle-info">
+            <span class="motion-toggle-title">Reduced Motion</span>
+            <span class="motion-toggle-sub">Minimize sliding, transitions, and glow animations across all panels</span>
           </div>
-        </div>
-      </section>
-
-      <!-- Section: Custom Color Editor -->
-      <section class="appear-section" id="section-colors">
-        <div class="appear-section-title">
-          <span>🖌️</span> Custom Colors
-        </div>
-        <p class="appear-section-desc">Override individual colors. Changes preview instantly.</p>
-
-        <div class="color-editor-grid">
-          <div class="color-row">
-            <label class="color-label">Background</label>
-            <div class="color-input-group">
-              <input type="color" id="color-bg-primary" class="color-swatch" title="Main background">
-              <input type="text" id="color-bg-primary-hex" class="hex-input" placeholder="#0b0f19" maxlength="7">
-              <span class="color-token-name">--bg-primary</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Surface</label>
-            <div class="color-input-group">
-              <input type="color" id="color-bg-surface" class="color-swatch" title="Card/surface background">
-              <input type="text" id="color-bg-surface-hex" class="hex-input" placeholder="#111827" maxlength="7">
-              <span class="color-token-name">--bg-surface</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Accent</label>
-            <div class="color-input-group">
-              <input type="color" id="color-accent" class="color-swatch" title="Accent / interactive color">
-              <input type="text" id="color-accent-hex" class="hex-input" placeholder="#8b5cf6" maxlength="7">
-              <span class="color-token-name">--accent-violet</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Text</label>
-            <div class="color-input-group">
-              <input type="color" id="color-text-main" class="color-swatch" title="Primary text color">
-              <input type="text" id="color-text-main-hex" class="hex-input" placeholder="#f8fafc" maxlength="7">
-              <span class="color-token-name">--text-main</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Muted Text</label>
-            <div class="color-input-group">
-              <input type="color" id="color-text-muted" class="color-swatch" title="Secondary/muted text">
-              <input type="text" id="color-text-muted-hex" class="hex-input" placeholder="#94a3b8" maxlength="7">
-              <span class="color-token-name">--text-muted</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Border</label>
-            <div class="color-input-group">
-              <input type="color" id="color-border" class="color-swatch" title="Border / divider color">
-              <input type="text" id="color-border-hex" class="hex-input" placeholder="#1e293b" maxlength="7">
-              <span class="color-token-name">--border-strong</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Contradiction</label>
-            <div class="color-input-group">
-              <input type="color" id="color-contradiction" class="color-swatch" title="Contradiction highlight">
-              <input type="text" id="color-contradiction-hex" class="hex-input" placeholder="#f43f5e" maxlength="7">
-              <span class="color-token-name">--status-contradiction</span>
-            </div>
-          </div>
-          <div class="color-row">
-            <label class="color-label">Consistent</label>
-            <div class="color-input-group">
-              <input type="color" id="color-consistent" class="color-swatch" title="Consistent highlight">
-              <input type="text" id="color-consistent-hex" class="hex-input" placeholder="#10b981" maxlength="7">
-              <span class="color-token-name">--status-consistent</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Contrast Warning -->
-        <div id="contrast-warning" class="contrast-warning hidden">
-          <span>⚠️</span>
-          <span id="contrast-warning-text">Low contrast detected — text may be difficult to read.</span>
-        </div>
-
-        <!-- Save as Custom Theme -->
-        <div class="color-save-row">
-          <input type="text" id="custom-theme-name" class="settings-input" placeholder="Name this theme…" maxlength="40">
-          <button id="btn-save-custom-theme" class="btn-action-sm">💾 Save Theme</button>
-          <button id="btn-reset-colors" class="btn-action-sm">↺ Reset</button>
-        </div>
-      </section>
-
-      <!-- Section: Typography -->
-      <section class="appear-section" id="section-typography">
-        <div class="appear-section-title">
-          <span>🔤</span> Typography
-        </div>
-
-        <div class="control-row">
-          <label class="control-label" for="font-family-select">Font Family</label>
-          <select id="font-family-select" class="appear-select">
-            <option value="system">System Default</option>
-            <option value="inter">Inter</option>
-            <option value="roboto">Roboto</option>
-            <option value="georgia">Georgia (Serif)</option>
-            <option value="mono">Monospace</option>
-          </select>
-        </div>
-
-        <div class="control-row">
-          <label class="control-label" for="font-size-slider">
-            Font Size: <span id="font-size-value">13</span>px
-          </label>
-          <input type="range" id="font-size-slider" class="appear-slider" min="10" max="22" step="1" value="13">
-        </div>
-
-        <div class="control-row">
-          <label class="control-label" for="line-height-slider">
-            Line Height: <span id="line-height-value">1.5</span>
-          </label>
-          <input type="range" id="line-height-slider" class="appear-slider" min="1.0" max="2.5" step="0.05" value="1.5">
-        </div>
-
-        <div class="control-row">
-          <label class="control-label" for="font-weight-select">Font Weight</label>
-          <select id="font-weight-select" class="appear-select">
-            <option value="normal">Normal (400)</option>
-            <option value="medium">Medium (500)</option>
-          </select>
-        </div>
-      </section>
-
-      <!-- Section: Layout & Density -->
-      <section class="appear-section" id="section-layout">
-        <div class="appear-section-title">
-          <span>📐</span> Layout &amp; Density
-        </div>
-
-        <div class="control-row">
-          <label class="control-label">Density</label>
-          <div class="button-group" id="density-group">
-            <button class="btn-group-option" data-value="compact">Compact</button>
-            <button class="btn-group-option active" data-value="comfortable">Comfortable</button>
-            <button class="btn-group-option" data-value="spacious">Spacious</button>
-          </div>
-        </div>
-
-        <div class="control-row">
-          <label class="control-label">Corner Radius</label>
-          <div class="button-group" id="radius-group">
-            <button class="btn-group-option" data-value="sharp">Sharp</button>
-            <button class="btn-group-option active" data-value="rounded">Rounded</button>
-            <button class="btn-group-option" data-value="pill">Pill</button>
-          </div>
-        </div>
-
-        <div class="control-row">
-          <label class="control-label">Border Strength</label>
-          <div class="button-group" id="border-group">
-            <button class="btn-group-option active" data-value="subtle">Subtle</button>
-            <button class="btn-group-option" data-value="strong">Strong</button>
-          </div>
-        </div>
-
-        <div class="control-row">
-          <label class="control-label checkbox-label" for="reduced-motion-toggle">
-            <input type="checkbox" id="reduced-motion-toggle" class="appear-checkbox">
-            Reduce Motion
-            <span class="control-hint">Fewer animations</span>
+          <label class="switch" for="reduced-motion-toggle">
+            <input type="checkbox" id="reduced-motion-toggle" aria-label="Toggle reduced motion preference">
+            <span class="slider round"></span>
           </label>
         </div>
-      </section>
+      </div>
 
-      <!-- Section: Save & Manage -->
-      <section class="appear-section" id="section-manage">
-        <div class="appear-section-title">
-          <span>📦</span> Save &amp; Manage
-        </div>
+    </section>
 
-        <div class="manage-actions">
-          <button id="btn-export-appearance" class="btn-action-sm">📤 Export Preferences</button>
-          <button id="btn-import-appearance" class="btn-action-sm">📥 Import Preferences</button>
-          <button id="btn-reset-appearance" class="btn-action-sm btn-danger-sm">↺ Reset All to Defaults</button>
-        </div>
-        <input type="file" id="import-file-input" accept=".json" class="hidden">
-
-        <div id="appear-feedback" class="appear-feedback hidden">
-          <span id="appear-feedback-text"></span>
-        </div>
-
-        <!-- Custom Theme Management Table -->
-        <div id="custom-theme-list" class="custom-theme-list">
-          <!-- Rendered by JS -->
-        </div>
-      </section>
-
-    </div><!-- /appear-controls-col -->
-
-    <!-- RIGHT: Live Preview -->
-    <div class="appear-preview-col">
+    <!-- RIGHT COLUMN: Live Interactive Preview -->
+    <aside class="appear-preview-col" aria-label="Live theme preview">
       <div class="preview-sticky">
         <div class="preview-header">
-          <div class="appear-section-title"><span>👁️</span> Live Preview</div>
-          <div class="active-theme-badge" id="active-theme-badge">Dark</div>
+          <h2 class="preview-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+            Live Preview
+          </h2>
+          <div class="active-theme-badge" id="active-theme-badge">Lavender Glass</div>
         </div>
 
-        <!-- Mini Preview Card -->
-        <div class="preview-shell">
+        <!-- Live Preview Glass Shell -->
+        <div class="preview-shell" id="theme-preview-shell">
           <!-- Mini Header -->
           <div class="preview-app-header">
             <div class="preview-brand">
-              <div class="preview-brand-icon">🔍</div>
+              <div class="preview-brand-circle"></div>
               <div>
                 <div class="preview-brand-name">ContextLens</div>
                 <div class="preview-brand-tag">Evidence before conclusions</div>
               </div>
             </div>
+            <span class="preview-pill-status">Active</span>
           </div>
 
           <!-- Mini Nav -->
           <div class="preview-nav">
             <div class="preview-nav-item active">Compare</div>
-            <div class="preview-nav-item">Demos</div>
+            <div class="preview-nav-item">Evidence</div>
             <div class="preview-nav-item">History</div>
           </div>
 
           <!-- Mini Source Cards -->
           <div class="preview-sources">
             <div class="preview-source-card preview-card-a">
-              <div class="preview-card-tag preview-tag-a">SOURCE A • CLAIM</div>
-              <div class="preview-card-text">"The DevSummit keynote takes place on Friday."</div>
+              <div class="preview-card-tag preview-tag-a">SOURCE A &bull; CLAIM</div>
+              <div class="preview-card-text">&ldquo;Solar energy capacity exceeded wind power globally this quarter.&rdquo;</div>
             </div>
             <div class="preview-source-card preview-card-b">
-              <div class="preview-card-tag preview-tag-b">SOURCE B • EVIDENCE</div>
-              <div class="preview-card-text">"All talks confirmed for Saturday, Nov 15th."</div>
+              <div class="preview-card-tag preview-tag-b">SOURCE B &bull; EVIDENCE</div>
+              <div class="preview-card-text">&ldquo;Official grid data confirms wind generated 610 TWh versus 580 TWh for solar.&rdquo;</div>
             </div>
           </div>
 
           <!-- Mini Compare Button -->
           <div class="preview-btn-row">
-            <div class="preview-compare-btn">⚡ Compare with ContextLens</div>
+            <div class="preview-compare-btn">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              Compare Passages
+            </div>
           </div>
 
           <!-- Mini Result Badge -->
           <div class="preview-result-badge preview-contradiction">
-            <span>⚠️</span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
             <div>
-              <div class="preview-badge-label">POSSIBLE CONTRADICTION</div>
-              <div class="preview-badge-sub">Incompatible event schedule claims</div>
+              <div class="preview-badge-label">CONTRADICTED</div>
+              <div class="preview-badge-sub">Grid data directly conflicts with the stated claim</div>
             </div>
           </div>
 
-          <!-- Mini Cards -->
-          <div class="preview-result-cards">
-            <div class="preview-result-card">
-              <div class="preview-result-card-title">Analysis Summary</div>
-              <div class="preview-result-card-text">Source A cites Friday while Source B confirms Saturday, presenting mutually exclusive dates.</div>
-            </div>
-            <div class="preview-result-card">
-              <div class="preview-result-card-title">Suggested Questions</div>
-              <div class="preview-result-list">
-                <div class="preview-list-item">Which source is the official schedule?</div>
-                <div class="preview-list-item">Was the keynote rescheduled?</div>
-              </div>
-            </div>
+          <!-- Mini Result Analysis Card -->
+          <div class="preview-result-card">
+            <div class="preview-result-card-title">Analysis Summary</div>
+            <div class="preview-result-card-text">Source A states solar output led wind power, but Source B's utility report documents wind generation exceeded solar by 30 TWh.</div>
           </div>
 
-          <!-- Mini History Item -->
+          <!-- Mini Additional Source Item -->
           <div class="preview-history-item">
-            <div class="preview-history-badge preview-contradiction">CONTRADICTION</div>
-            <div class="preview-history-text">A: "Keynote on Friday" vs B: "Confirmed Saturday"</div>
+            <div class="preview-history-badge">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+              </svg>
+              Verified Source
+            </div>
+            <div class="preview-history-text">International Energy Agency Annual Report</div>
           </div>
         </div>
         <!-- End preview-shell -->
 
       </div>
-    </div><!-- /appear-preview-col -->
+    </aside>
 
-  </div><!-- /appear-layout -->
-</div><!-- /app-container -->
+  </main>
+</div>
 
 <script src="themes.js"></script>
 <script src="appearance.js"></script>

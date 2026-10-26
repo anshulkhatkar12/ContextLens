@@ -87,7 +87,9 @@
     floatingPill.style.left = `${left}px`;
 
     floatingPill.innerHTML = `
-      <span class="contextlens-pill-brand">🔍 ContextLens</span>
+      <span class="contextlens-pill-brand">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>ContextLens
+      </span>
       <button class="contextlens-pill-btn btn-claim" title="Save as Claim (Source A)">+ Claim A</button>
       <button class="contextlens-pill-btn btn-evidence" title="Save as Evidence (Source B)">+ Evidence B</button>
     `;
@@ -107,12 +109,12 @@
       evt.stopPropagation();
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({ current_claim: payload }, () => {
-          showToast("Claim saved as Source A ✓");
+          showToast("Claim saved as Source A");
           removePill();
         });
       } else if (typeof chrome !== "undefined" && chrome.runtime) {
         chrome.runtime.sendMessage({ type: "CAPTURE_CLAIM", payload }, () => {
-          showToast("Claim saved as Source A ✓");
+          showToast("Claim saved as Source A");
           removePill();
         });
       }
@@ -122,12 +124,12 @@
       evt.stopPropagation();
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
         chrome.storage.local.set({ current_evidence: payload }, () => {
-          showToast("Evidence saved as Source B ✓");
+          showToast("Evidence saved as Source B");
           removePill();
         });
       } else if (typeof chrome !== "undefined" && chrome.runtime) {
         chrome.runtime.sendMessage({ type: "CAPTURE_EVIDENCE", payload }, () => {
-          showToast("Evidence saved as Source B ✓");
+          showToast("Evidence saved as Source B");
           removePill();
         });
       }
@@ -152,7 +154,7 @@
 
     const toast = document.createElement("div");
     toast.className = "contextlens-toast";
-    toast.innerHTML = `<span>🔍</span><span>${escapeHtml(message)}</span>`;
+    toast.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg><span>${escapeHtml(message)}</span>`;
     toastContainer.appendChild(toast);
 
     setTimeout(() => {
