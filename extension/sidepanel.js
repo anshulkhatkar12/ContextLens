@@ -703,7 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
         analysisResult = runClientHeuristicAnalysis(payload.claim_a, payload.claim_b);
         if (backendError) {
           analysisResult.limitations = [
-            `⚠ Backend notice: ${backendError}. Real AI analysis requires the backend to be running with an active LLM provider (run 'python -m uvicorn backend.main:app --port 8000').`,
+            `Backend notice: ${backendError}. Real AI analysis requires the backend to be running with an active LLM provider (run 'python -m uvicorn backend.main:app --port 8000').`,
             ...(analysisResult.limitations || [])
           ];
         }
@@ -804,18 +804,19 @@ document.addEventListener("DOMContentLoaded", () => {
         engineBadge.className = "engine-badge engine-heuristic";
         engineBadge.classList.remove("hidden");
       } else if (isAI) {
-        let label = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> AI`;
+        const aiSvg = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>`;
+        let label = `${aiSvg} AI`;
         const engStr = String(result.engine || "").toLowerCase();
         if (engStr.includes("groq")) {
-          label = "⚡ Groq";
+          label = `${aiSvg} Groq`;
         } else if (engStr.includes("gemini")) {
-          label = "🤖 Gemini";
+          label = `${aiSvg} Gemini`;
         } else if (engStr.includes("openai") || engStr.includes("gpt")) {
-          label = "🤖 OpenAI";
+          label = `${aiSvg} OpenAI`;
         } else if (engStr.includes("anthropic") || engStr.includes("claude")) {
-          label = "🤖 Claude";
+          label = `${aiSvg} Claude`;
         } else if (engStr.includes("local") || engStr.includes("qwen")) {
-          label = "🤖 Local Qwen";
+          label = `${aiSvg} Local Qwen`;
         }
         engineBadge.innerHTML = label;
         engineBadge.className = "engine-badge engine-llm";
