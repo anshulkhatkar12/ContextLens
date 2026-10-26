@@ -1,3 +1,4 @@
+
 // ContextLens Content Script
 // Handles on-page text selection, floating capture pill, and communication
 

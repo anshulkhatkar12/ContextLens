@@ -11,6 +11,15 @@ document.addEventListener("DOMContentLoaded", () => {
     settings: {
       backendUrl: "http://localhost:8000",
       apiKey: ""
+    },
+    appearanceState: {
+      activeThemeId: "dark",
+      customThemes: [],
+      typography: { fontFamily: "system", fontSize: 13, lineHeight: 1.5, fontWeight: "normal" },
+      density: "comfortable",
+      radiusPreset: "rounded",
+      reducedMotion: false,
+      borderStrength: "subtle"
     }
   };
 
@@ -90,6 +99,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const backendStatusMsg = document.getElementById("backend-status-msg");
   const btnSaveSettings = document.getElementById("btn-save-settings");
 
+  // DOM Elements - Appearance & Themes
+  const quickThemeChips = document.getElementById("quick-theme-chips");
+  const quickPresetChips = document.getElementById("quick-preset-chips");
+  const quickDensityControl = document.getElementById("quick-density-control");
+  const quickRadiusControl = document.getElementById("quick-radius-control");
+  const quickReducedMotion = document.getElementById("quick-reduced-motion");
+  const quickStrongBorders = document.getElementById("quick-strong-borders");
+  const btnOpenAppearanceStudio = document.getElementById("btn-open-appearance-studio");
+  const btnOpenStudioBottom = document.getElementById("btn-open-studio-bottom");
+  const btnGotoAppearance = document.getElementById("btn-goto-appearance");
+
   // ----------------------------------------------------------------
   // INITIALIZATION
   // ----------------------------------------------------------------
@@ -128,7 +148,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
-      // Listen for real-time changes from background script or content scripts
+      // Initialize themes and appearance
+      if (window.ContextLensThemes) {
+        window.ContextLensThemes.loadAppearance((app) => {
+          state.appearanceState = app || { ...window.ContextLensThemes.APPEARANCE_DEFAULTS };
+          window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+          renderQuickAppearanceControls();
+        });
+      }
+
+      // Listen for real-time changes from background script or appearance studio
       chrome.storage.onChanged.addListener((changes, area) => {
         if (area === "local") {
           if (changes.current_claim) {
@@ -144,6 +173,19 @@ document.addEventListener("DOMContentLoaded", () => {
             renderHistory();
           }
         }
+        if ((area === "local" || area === "sync") && changes.appearance && changes.appearance.newValue && window.ContextLensThemes) {
+          window.ContextLensThemes.loadAppearance((app) => {
+            state.appearanceState = app;
+            window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+            renderQuickAppearanceControls();
+          });
+        }
+      });
+    } else if (window.ContextLensThemes) {
+      window.ContextLensThemes.loadAppearance((app) => {
+        state.appearanceState = app;
+        window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+        renderQuickAppearanceControls();
       });
     }
   }
@@ -201,6 +243,69 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") });
       }
     });
+
+    // Appearance Controls Event Listeners
+    const openAppearanceStudio = () => {
+      if (typeof chrome !== "undefined" && chrome.tabs) {
+        chrome.tabs.create({ url: chrome.runtime.getURL("appearance.html") });
+      } else {
+        window.open("appearance.html", "_blank");
+      }
+    };
+
+    if (btnOpenAppearanceStudio) btnOpenAppearanceStudio.addEventListener("click", openAppearanceStudio);
+    if (btnOpenStudioBottom) btnOpenStudioBottom.addEventListener("click", openAppearanceStudio);
+    if (btnGotoAppearance) {
+      btnGotoAppearance.addEventListener("click", () => switchTab("appearance"));
+    }
+
+    if (quickDensityControl) {
+      quickDensityControl.querySelectorAll(".seg-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const density = btn.dataset.density;
+          state.appearanceState.density = density;
+          if (window.ContextLensThemes) {
+            window.ContextLensThemes.applyDensity(density);
+            window.ContextLensThemes.saveAppearance(state.appearanceState);
+          }
+          quickDensityControl.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    }
+
+    if (quickRadiusControl) {
+      quickRadiusControl.querySelectorAll(".seg-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const radius = btn.dataset.radius;
+          state.appearanceState.radiusPreset = radius;
+          if (window.ContextLensThemes) {
+            window.ContextLensThemes.applyRadius(radius);
+            window.ContextLensThemes.saveAppearance(state.appearanceState);
+          }
+          quickRadiusControl.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    }
+
+    if (quickReducedMotion) {
+      quickReducedMotion.addEventListener("change", (e) => {
+        state.appearanceState.reducedMotion = e.target.checked;
+        if (window.ContextLensThemes) {
+          window.ContextLensThemes.applyReducedMotion(e.target.checked);
+          window.ContextLensThemes.saveAppearance(state.appearanceState);
+        }
+      });
+    }
+
+    if (quickStrongBorders) {
+      quickStrongBorders.addEventListener("change", (e) => {
+        state.appearanceState.borderStrength = e.target.checked ? "strong" : "subtle";
+        if (window.ContextLensThemes) {
+          window.ContextLensThemes.applyBorderStrength(state.appearanceState.borderStrength);
+          window.ContextLensThemes.saveAppearance(state.appearanceState);
+        }
+      });
+    }
 
     // Dismiss Onboarding Hint
     if (btnDismissHint) {
@@ -1309,5 +1414,77 @@ ${(res.verification_questions || []).map((q) => `- ${q}`).join("\n")}
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ----------------------------------------------------------------
+  // QUICK APPEARANCE CONTROLS RENDERER
+  // ----------------------------------------------------------------
+  function renderQuickAppearanceControls() {
+    if (!window.ContextLensThemes) return;
+    const T = window.ContextLensThemes;
+    const app = state.appearanceState || T.APPEARANCE_DEFAULTS;
+
+    // Render Quick Theme Chips
+    if (quickThemeChips) {
+      quickThemeChips.innerHTML = "";
+      const allThemes = [...T.BUILTIN_THEMES, ...(app.customThemes || [])];
+      allThemes.forEach((t) => {
+        const chip = document.createElement("button");
+        chip.className = `quick-theme-chip ${t.id === app.activeThemeId ? "active" : ""}`;
+        chip.title = `${t.name} (${t.category || "theme"})`;
+        chip.innerHTML = `
+          <span class="chip-color-swatch" style="background: ${t.tokens['--bg-surface'] || '#111827'}; border: 2px solid ${t.tokens['--accent-violet'] || '#8b5cf6'}"></span>
+          <span class="chip-name">${t.emoji || "🎨"} ${escapeHtml(t.name)}</span>
+        `;
+        chip.addEventListener("click", () => {
+          app.activeThemeId = t.id;
+          T.applyFullAppearance(app);
+          T.saveAppearance(app);
+          renderQuickAppearanceControls();
+        });
+        quickThemeChips.appendChild(chip);
+      });
+    }
+
+    // Render Quick Workflow Presets
+    if (quickPresetChips) {
+      quickPresetChips.innerHTML = "";
+      T.PERSONALIZATION_PRESETS.forEach((p) => {
+        const btn = document.createElement("button");
+        btn.className = "quick-preset-chip";
+        btn.title = p.description;
+        btn.innerHTML = `<span class="preset-emoji">${p.emoji}</span> <span class="preset-name">${escapeHtml(p.name)}</span>`;
+        btn.addEventListener("click", () => {
+          app.activeThemeId = p.themeId;
+          app.typography = { ...p.typography };
+          app.density = p.density;
+          app.radiusPreset = p.radiusPreset;
+          app.reducedMotion = p.reducedMotion;
+          app.borderStrength = p.borderStrength;
+          T.applyFullAppearance(app);
+          T.saveAppearance(app);
+          renderQuickAppearanceControls();
+        });
+        quickPresetChips.appendChild(btn);
+      });
+    }
+
+    // Sync segmented controls & toggles
+    if (quickDensityControl) {
+      quickDensityControl.querySelectorAll(".seg-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.density === app.density);
+      });
+    }
+    if (quickRadiusControl) {
+      quickRadiusControl.querySelectorAll(".seg-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.radius === app.radiusPreset);
+      });
+    }
+    if (quickReducedMotion) {
+      quickReducedMotion.checked = !!app.reducedMotion;
+    }
+    if (quickStrongBorders) {
+      quickStrongBorders.checked = app.borderStrength === "strong";
+    }
   }
 });
