@@ -660,7 +660,7 @@
 
 /* Preview App Header */
 .preview-app-header {
-  background: rgba(15, 23, 42, 0.85);
+  background: var(--bg-surface-elevated);
   border-bottom: 1px solid var(--border-subtle);
   padding: 8px 10px;
   display: flex;
@@ -707,9 +707,10 @@
 }
 
 .preview-nav-item.active {
-  background: rgba(139, 92, 246, 0.2);
-  border: 1px solid rgba(139, 92, 246, 0.35);
-  color: #fff;
+  background: var(--status-context-bg);
+  border: 1px solid var(--border-focus);
+  color: var(--accent-violet);
+  font-weight: 600;
 }
 
 /* Preview Sources */
@@ -746,13 +747,13 @@
 }
 
 .preview-tag-a {
-  background: rgba(139, 92, 246, 0.18);
-  color: #c4b5fd;
+  background: var(--status-context-bg);
+  color: var(--accent-violet);
 }
 
 .preview-tag-b {
-  background: rgba(56, 189, 248, 0.18);
-  color: #7dd3fc;
+  background: var(--status-consistent-bg);
+  color: var(--status-consistent);
 }
 
 .preview-card-text {
@@ -767,7 +768,7 @@
 }
 
 .preview-compare-btn {
-  background: linear-gradient(135deg, var(--accent-violet), #6366f1);
+  background: linear-gradient(135deg, var(--accent-violet), var(--accent-violet-hover));
   color: #fff;
   border-radius: var(--radius-md);
   padding: 6px 10px;
@@ -790,8 +791,8 @@
 
 .preview-result-badge.preview-contradiction {
   background: var(--status-contradiction-bg);
-  border-color: rgba(244, 63, 94, 0.35);
-  color: #fda4af;
+  border-color: var(--status-contradiction);
+  color: var(--status-contradiction);
 }
 
 .preview-badge-label {

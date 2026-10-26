@@ -3,8 +3,24 @@
 
 // ─────────────────────────────────────────────────────────────────────────────
 // DEFAULT APPEARANCE SETTINGS
-// ────────────────────────────────────────────────────────────────────────�// ─────────────────────────────────────────────────────────────────────────────
-// BUILTIN THEME PRESETS
+// ─────────────────────────────────────────────────────────────────────────────
+const APPEARANCE_DEFAULTS = {
+  activeThemeId: "dark",
+  customThemes: [],
+  typography: {
+    fontFamily: "system",
+    fontSize: 13,
+    lineHeight: 1.5,
+    fontWeight: "normal"
+  },
+  density: "comfortable",
+  radiusPreset: "rounded",
+  reducedMotion: false,
+  borderStrength: "subtle"
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILT-IN THEME PRESETS
 // ─────────────────────────────────────────────────────────────────────────────
 const BUILTIN_THEMES = [
   // ── DARK THEMES ──
@@ -703,26 +719,45 @@ function applyFullAppearance(appearance, customThemes = []) {
 // STORAGE HELPERS
 // ─────────────────────────────────────────────────────────────────────────────
 function loadAppearance(callback) {
-  if (typeof chrome !== "undefined" && chrome.storage) {
-    // Try sync first for small appearance data, fall back to local
-    chrome.storage.sync.get(["appearance"], (syncResult) => {
-      if (syncResult && syncResult.appearance) {
-        callback(validateAppearance(syncResult.appearance));
-      } else {
-        chrome.storage.local.get(["appearance"], (localResult) => {
-          callback(validateAppearance(localResult.appearance || null));
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+    chrome.storage.local.get(["appearance"], (localResult) => {
+      const localApp = (localResult && localResult.appearance) || {};
+      if (chrome.storage.sync) {
+        chrome.storage.sync.get(["appearance"], (syncResult) => {
+          const syncApp = (syncResult && syncResult.appearance) || {};
+          // Merge: sync settings take precedence for UI preferences,
+          // but custom themes are preserved from local
+          const merged = {
+            ...localApp,
+            ...syncApp,
+            customThemes: Array.isArray(localApp.customThemes) && localApp.customThemes.length > 0
+              ? localApp.customThemes
+              : (Array.isArray(syncApp.customThemes) ? syncApp.customThemes : [])
+          };
+          const validated = validateAppearance(merged);
+          if (callback) callback(validated);
         });
+      } else {
+        const validated = validateAppearance(localApp);
+        if (callback) callback(validated);
       }
     });
+  } else if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      const raw = window.localStorage.getItem("contextlens_appearance");
+      const parsed = raw ? JSON.parse(raw) : null;
+      if (callback) callback(validateAppearance(parsed));
+    } catch (e) {
+      if (callback) callback(validateAppearance(null));
+    }
   } else {
-    callback(APPEARANCE_DEFAULTS);
+    if (callback) callback(validateAppearance(null));
   }
 }
 
 function saveAppearance(appearance, callback) {
   const validated = validateAppearance(appearance);
-  if (typeof chrome !== "undefined" && chrome.storage) {
-    // Save small config to sync, custom themes to local (can be large)
+  if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
     const syncData = {
       activeThemeId: validated.activeThemeId,
       typography: validated.typography,
@@ -735,11 +770,26 @@ function saveAppearance(appearance, callback) {
       appearance: validated
     };
 
-    chrome.storage.sync.set({ appearance: syncData }, () => {
-      chrome.storage.local.set(localData, () => {
+    chrome.storage.local.set(localData, () => {
+      if (chrome.storage.sync) {
+        try {
+          chrome.storage.sync.set({ appearance: syncData }, () => {
+            if (callback) callback(validated);
+          });
+        } catch (err) {
+          if (callback) callback(validated);
+        }
+      } else {
         if (callback) callback(validated);
-      });
+      }
     });
+  } else if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      window.localStorage.setItem("contextlens_appearance", JSON.stringify(validated));
+    } catch (e) {
+      console.warn("Failed to save to localStorage", e);
+    }
+    if (callback) callback(validated);
   } else {
     if (callback) callback(validated);
   }
