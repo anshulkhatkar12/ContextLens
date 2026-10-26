@@ -39,6 +39,7 @@ DEFAULT_LOCAL_MODEL   = os.getenv("LOCAL_MODEL",   os.getenv("OLLAMA_MODEL", "qw
 LOCAL_LLM_URL         = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST",  "http://localhost:11434")).rstrip("/")
 
 DEFAULT_GEMINI_MODEL  = os.getenv("GEMINI_MODEL",    "gemini-3.8-flash")
+DEFAULT_GROQ_MODEL    = os.getenv("GROQ_MODEL",      "openai/gpt-oss-120b")
 DEFAULT_OPENAI_MODEL  = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
 DEFAULT_ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307")
 
@@ -57,7 +58,7 @@ using ONLY the evidence supplied. Never invent facts, URLs, statistics, quotes,
 or source content that are not present in the passages.
 
 CLASSIFICATION (choose exactly one):
-  SUPPORTED             – the evidence passage directly supports the claim passage
+  SUPPORTED             – Passage B confirms and substantiates the core claim of Passage A. Passage A MUST contain an explicit factual assertion that is corroborated by Passage B.
   CONTRADICTED          – reliable evidence directly conflicts with the claim under
                           comparable conditions (same entity, scope, timeframe)
   PARTIALLY_SUPPORTED   – some aspects of the claim are supported, but the full
@@ -65,7 +66,7 @@ CLASSIFICATION (choose exactly one):
   DIFFERENT_CONTEXT     – passages differ because of dates, scope, definitions,
                           conditions, or measurement methods
   INSUFFICIENT_EVIDENCE – the evidence does not provide enough information to
-                          assess the claim
+                          assess the claim, OR Passage A does not contain an evaluable factual assertion (e.g. Passage A is merely a noun, entity name, topic title, or incomplete fragment such as 'Mount Fuji'). A bare topic or noun phrase alone cannot be classified as SUPPORTED or CONTRADICTED.
   UNRELATED             – the evidence does not meaningfully address the claim
 
 RULES:
@@ -592,6 +593,8 @@ def get_configured_provider_name() -> str:
         return explicit
 
     # Auto-detection priority if LLM_PROVIDER is not set
+    if os.getenv("GROQ_API_KEY"):
+        return "groq"
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "gemini"
     if os.getenv("OPENAI_API_KEY"):
@@ -618,7 +621,9 @@ def get_llm_model(
     # Check for provider key overrides
     override_provider = None
     if api_key_override:
-        if api_key_override.startswith("sk-ant-"):
+        if api_key_override.startswith("gsk_"):
+            override_provider = "groq"
+        elif api_key_override.startswith("sk-ant-"):
             override_provider = "anthropic"
         elif api_key_override.startswith("sk-"):
             override_provider = "openai"
@@ -628,16 +633,19 @@ def get_llm_model(
     if override_provider and not provider_override:
         provider = override_provider
 
-    temperature = float(os.getenv("LLM_TEMPERATURE", "0.2"))
+    temperature = float(os.getenv("LLM_TEMPERATURE", "0.0"))
 
     # 1. Google Gemini
     if provider in ("gemini", "google", "google-genai"):
-        gemini_key = api_key_override or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+        gemini_key = None
+        if api_key_override and not api_key_override.startswith("gsk_") and not api_key_override.startswith("sk-"):
+            gemini_key = api_key_override
+        gemini_key = gemini_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
         if not gemini_key:
             raise LLMConfigurationError(
                 "LLM provider is set to 'gemini', but neither GEMINI_API_KEY nor GOOGLE_API_KEY is configured in the environment."
             )
-        model_name = os.getenv("LLM_MODEL") or os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
+        model_name = os.getenv("LLM_MODEL") or os.getenv("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             chat_model = ChatGoogleGenerativeAI(
@@ -651,14 +659,38 @@ def get_llm_model(
         except ImportError as e:
             raise LLMConfigurationError(f"langchain_google_genai is not installed: {e}")
 
-    # 2. OpenAI
+    # 2. Groq (Fast Cloud Inference)
+    elif provider in ("groq",):
+        groq_key = None
+        if api_key_override and api_key_override.startswith("gsk_"):
+            groq_key = api_key_override
+        groq_key = groq_key or os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            raise LLMConfigurationError(
+                "LLM provider is set to 'groq', but GROQ_API_KEY is not configured in the environment."
+            )
+        model_name = os.getenv("LLM_MODEL") or os.getenv("GROQ_MODEL") or DEFAULT_GROQ_MODEL
+        try:
+            from langchain_groq import ChatGroq
+            chat_model = ChatGroq(
+                model=model_name,
+                api_key=groq_key,
+                temperature=temperature,
+                max_retries=2,
+                timeout=25.0
+            )
+            return chat_model, "groq"
+        except ImportError as e:
+            raise LLMConfigurationError(f"langchain_groq is not installed: {e}")
+
+    # 3. OpenAI
     elif provider in ("openai", "gpt"):
         openai_key = api_key_override or os.getenv("OPENAI_API_KEY")
         if not openai_key:
             raise LLMConfigurationError(
                 "LLM provider is set to 'openai', but OPENAI_API_KEY is not configured in the environment."
             )
-        model_name = os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+        model_name = os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL") or DEFAULT_OPENAI_MODEL
         try:
             from langchain_openai import ChatOpenAI
             chat_model = ChatOpenAI(
@@ -672,14 +704,14 @@ def get_llm_model(
         except ImportError as e:
             raise LLMConfigurationError(f"langchain_openai is not installed: {e}")
 
-    # 3. Anthropic Claude
+    # 4. Anthropic Claude
     elif provider in ("anthropic", "claude"):
         anthropic_key = api_key_override or os.getenv("ANTHROPIC_API_KEY")
         if not anthropic_key:
             raise LLMConfigurationError(
                 "LLM provider is set to 'anthropic', but ANTHROPIC_API_KEY is not configured in the environment."
             )
-        model_name = os.getenv("LLM_MODEL") or os.getenv("ANTHROPIC_MODEL") or "claude-3-haiku-20240307"
+        model_name = os.getenv("LLM_MODEL") or os.getenv("ANTHROPIC_MODEL") or DEFAULT_ANTHROPIC_MODEL
         try:
             from langchain_anthropic import ChatAnthropic
             chat_model = ChatAnthropic(
@@ -693,12 +725,16 @@ def get_llm_model(
         except ImportError as e:
             raise LLMConfigurationError(f"langchain_anthropic is not installed: {e}")
 
-    # 4. Built-in Deterministic Heuristic Engine
+    # 5. Local Model Runner (Qwen / Ollama / LM Studio)
+    elif provider in ("local", "qwen", "ollama"):
+        return None, "local"
+
+    # 6. Built-in Deterministic Heuristic Engine
     elif provider in ("heuristic", "builtin", "none", ""):
         return None, "heuristic"
 
     else:
         raise LLMConfigurationError(
-            f"Unsupported LLM_PROVIDER '{provider}'. Supported options are: 'gemini', 'openai', 'anthropic', 'heuristic'."
+            f"Unsupported LLM_PROVIDER '{provider}'. Supported options are: 'gemini', 'groq', 'openai', 'anthropic', 'heuristic', 'local'."
         )
 
