@@ -27,8 +27,8 @@ def test_lavender_default_and_curated_dark_themes():
     assert "const BUILTIN_THEMES" in content
     assert 'activeThemeId: "lavender"' in content, "Default theme on fresh install must be lavender"
 
-    # Verify the 6 curated themes (Lavender default + 5 dark themes)
-    curated_themes = ["lavender", "midnight", "crimson", "emerald", "amethyst", "carbon"]
+    # Verify the curated themes (Lavender default + dark and special themes)
+    curated_themes = ["lavender", "midnight", "crimson", "emerald", "amethyst", "carbon", "catoo"]
     for tid in curated_themes:
         assert f'id: "{tid}"' in content or f'id: \'{tid}\'', f"Curated theme {tid} missing"
 

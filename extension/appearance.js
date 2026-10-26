@@ -79,6 +79,9 @@ document.addEventListener("DOMContentLoaded", () => {
       defaultThemeContainer.innerHTML = "";
       const lavenderTheme = T.BUILTIN_THEMES.find(t => t.id === "lavender") || T.BUILTIN_THEMES[0];
       const isSelected = activeId === lavenderTheme.id;
+      const lavenderBg = lavenderTheme.image
+        ? `background-image: url('assets/themes/${lavenderTheme.image}'); background-size: cover; background-position: center;`
+        : `background: ${lavenderTheme.previewGradient}`;
 
       const card = document.createElement("div");
       card.className = `default-theme-card ${isSelected ? "selected" : ""}`;
@@ -90,7 +93,7 @@ document.addEventListener("DOMContentLoaded", () => {
       card.innerHTML = `
         <div class="theme-card-glow-layer"></div>
         <div class="theme-card-inner">
-          <div class="theme-visual-preview" style="background: ${lavenderTheme.previewGradient}">
+          <div class="theme-visual-preview" style="${lavenderBg}">
             <div class="preview-mini-glass">
               <span class="preview-mini-dot" style="background: ${lavenderTheme.accentColor}"></span>
               <span class="preview-mini-line"></span>
@@ -130,23 +133,27 @@ document.addEventListener("DOMContentLoaded", () => {
       defaultThemeContainer.appendChild(card);
     }
 
-    // 2. Render Curated Dark Themes
+    // 2. Render Curated Themes Gallery (1st: Emerald, 2nd: Crimson, 3rd: Midnight, 4th: Amethyst, 5th: Carbon, Last: CATOO)
     if (darkThemeGallery) {
       darkThemeGallery.innerHTML = "";
-      const darkThemes = T.BUILTIN_THEMES.filter(t => t.category === "dark");
+      const galleryThemes = T.BUILTIN_THEMES.filter(t => t.id !== "lavender");
 
-      darkThemes.forEach((theme) => {
+      galleryThemes.forEach((theme) => {
         const isSelected = activeId === theme.id;
         const card = document.createElement("div");
         card.className = `dark-theme-card ${isSelected ? "selected" : ""}`;
         card.setAttribute("role", "radio");
         card.setAttribute("aria-checked", isSelected ? "true" : "false");
         card.setAttribute("tabindex", "0");
-        card.title = `${theme.name} (Dark Theme)`;
+        card.title = `${theme.name} Theme`;
+
+        const themeBg = theme.image
+          ? `background-image: url('assets/themes/${theme.image}'); background-size: cover; background-position: center;`
+          : `background: ${theme.previewGradient}`;
 
         card.innerHTML = `
           <div class="theme-card-glow-layer" style="--card-glow-color: ${theme.tokens['--accent-violet']}"></div>
-          <div class="theme-visual-preview" style="background: ${theme.previewGradient}">
+          <div class="theme-visual-preview" style="${themeBg}">
             <div class="preview-mini-glass">
               <span class="preview-mini-dot" style="background: ${theme.accentColor}"></span>
               <span class="preview-mini-line"></span>
