@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextLens — Appearance</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <link rel="stylesheet" href="appearance.css">
+</head>
+<body>
+<div class="app-container appear-page">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="9" cy="11" r="6" stroke="url(#lg1)" stroke-width="2.5"/>
+          <circle cx="15" cy="13" r="6" stroke="url(#lg2)" stroke-width="2.5"/>
+          <defs>
+            <linearGradient id="lg1" x1="3" y1="5" x2="15" y2="17" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#8B5CF6"/><stop offset="1" stop-color="#38BDF8"/>
+            </linearGradient>
+            <linearGradient id="lg2" x1="9" y1="7" x2="21" y2="19" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#38BDF8"/><stop offset="1" stop-color="#8B5CF6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <span class="brand-name">ContextLens</span>
+        <span class="brand-tagline">Appearance &amp; Personalization</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btn-back-sidepanel" class="icon-btn" title="Back to ContextLens">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Appearance Body -->
+  <div class="appear-layout">
+
+    <!-- LEFT: Controls -->
+    <div class="appear-controls-col">
+
+      <!-- Section: Presets -->
+      <section class="appear-section" id="section-presets">
+        <div class="appear-section-title">
+          <span>🎯</span> Quick Presets
+        </div>
+        <p class="appear-section-desc">One-click starting configurations for different workflows.</p>
+        <div class="presets-grid" id="presets-grid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- Section: Theme Gallery -->
+      <section class="appear-section" id="section-themes">
+        <div class="appear-section-title">
+          <span>🎨</span> Theme Gallery
+        </div>
+        <p class="appear-section-desc">Select a coordinated color palette for the interface.</p>
+
+        <div class="theme-category-label">Dark Themes</div>
+        <div class="theme-gallery" id="theme-gallery-dark"><!-- Rendered by JS --></div>
+
+        <div class="theme-category-label mt-8">Light Themes</div>
+        <div class="theme-gallery" id="theme-gallery-light"><!-- Rendered by JS --></div>
+
+        <div class="theme-category-label mt-8">Accessibility</div>
+        <div class="theme-gallery" id="theme-gallery-accessibility"><!-- Rendered by JS --></div>
+
+        <div id="custom-themes-section">
+          <div class="theme-category-label mt-8">My Custom Themes</div>
+          <div class="theme-gallery" id="theme-gallery-custom"><!-- Rendered by JS --></div>
+          <div id="custom-themes-empty" class="empty-state-sm hidden">
+            <div class="empty-text">No custom themes saved yet.</div>
+            <div class="empty-sub">Save your color edits below as a named theme.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section: Custom Color Editor -->
+      <section class="appear-section" id="section-colors">
+        <div class="appear-section-title">
+          <span>🖌️</span> Custom Colors
+        </div>
+        <p class="appear-section-desc">Override individual colors. Changes preview instantly.</p>
+
+        <div class="color-editor-grid">
+          <div class="color-row">
+            <label class="color-label">Background</label>
+            <div class="color-input-group">
+              <input type="color" id="color-bg-primary" class="color-swatch" title="Main background">
+              <input type="text" id="color-bg-primary-hex" class="hex-input" placeholder="#0b0f19" maxlength="7">
+              <span class="color-token-name">--bg-primary</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Surface</label>
+            <div class="color-input-group">
+              <input type="color" id="color-bg-surface" class="color-swatch" title="Card/surface background">
+              <input type="text" id="color-bg-surface-hex" class="hex-input" placeholder="#111827" maxlength="7">
+              <span class="color-token-name">--bg-surface</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Accent</label>
+            <div class="color-input-group">
+              <input type="color" id="color-accent" class="color-swatch" title="Accent / interactive color">
+              <input type="text" id="color-accent-hex" class="hex-input" placeholder="#8b5cf6" maxlength="7">
+              <span class="color-token-name">--accent-violet</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Text</label>
+            <div class="color-input-group">
+              <input type="color" id="color-text-main" class="color-swatch" title="Primary text color">
+              <input type="text" id="color-text-main-hex" class="hex-input" placeholder="#f8fafc" maxlength="7">
+              <span class="color-token-name">--text-main</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Muted Text</label>
+            <div class="color-input-group">
+              <input type="color" id="color-text-muted" class="color-swatch" title="Secondary/muted text">
+              <input type="text" id="color-text-muted-hex" class="hex-input" placeholder="#94a3b8" maxlength="7">
+              <span class="color-token-name">--text-muted</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Border</label>
+            <div class="color-input-group">
+              <input type="color" id="color-border" class="color-swatch" title="Border / divider color">
+              <input type="text" id="color-border-hex" class="hex-input" placeholder="#1e293b" maxlength="7">
+              <span class="color-token-name">--border-strong</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Contradiction</label>
+            <div class="color-input-group">
+              <input type="color" id="color-contradiction" class="color-swatch" title="Contradiction highlight">
+              <input type="text" id="color-contradiction-hex" class="hex-input" placeholder="#f43f5e" maxlength="7">
+              <span class="color-token-name">--status-contradiction</span>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="color-label">Consistent</label>
+            <div class="color-input-group">
+              <input type="color" id="color-consistent" class="color-swatch" title="Consistent highlight">
+              <input type="text" id="color-consistent-hex" class="hex-input" placeholder="#10b981" maxlength="7">
+              <span class="color-token-name">--status-consistent</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contrast Warning -->
+        <div id="contrast-warning" class="contrast-warning hidden">
+          <span>⚠️</span>
+          <span id="contrast-warning-text">Low contrast detected — text may be difficult to read.</span>
+        </div>
+
+        <!-- Save as Custom Theme -->
+        <div class="color-save-row">
+          <input type="text" id="custom-theme-name" class="settings-input" placeholder="Name this theme…" maxlength="40">
+          <button id="btn-save-custom-theme" class="btn-action-sm">💾 Save Theme</button>
+          <button id="btn-reset-colors" class="btn-action-sm">↺ Reset</button>
+        </div>
+      </section>
+
+      <!-- Section: Typography -->
+      <section class="appear-section" id="section-typography">
+        <div class="appear-section-title">
+          <span>🔤</span> Typography
+        </div>
+
+        <div class="control-row">
+          <label class="control-label" for="font-family-select">Font Family</label>
+          <select id="font-family-select" class="appear-select">
+            <option value="system">System Default</option>
+            <option value="inter">Inter</option>
+            <option value="roboto">Roboto</option>
+            <option value="georgia">Georgia (Serif)</option>
+            <option value="mono">Monospace</option>
+          </select>
+        </div>
+
+        <div class="control-row">
+          <label class="control-label" for="font-size-slider">
+            Font Size: <span id="font-size-value">13</span>px
+          </label>
+          <input type="range" id="font-size-slider" class="appear-slider" min="10" max="22" step="1" value="13">
+        </div>
+
+        <div class="control-row">
+          <label class="control-label" for="line-height-slider">
+            Line Height: <span id="line-height-value">1.5</span>
+          </label>
+          <input type="range" id="line-height-slider" class="appear-slider" min="1.0" max="2.5" step="0.05" value="1.5">
+        </div>
+
+        <div class="control-row">
+          <label class="control-label" for="font-weight-select">Font Weight</label>
+          <select id="font-weight-select" class="appear-select">
+            <option value="normal">Normal (400)</option>
+            <option value="medium">Medium (500)</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Section: Layout & Density -->
+      <section class="appear-section" id="section-layout">
+        <div class="appear-section-title">
+          <span>📐</span> Layout &amp; Density
+        </div>
+
+        <div class="control-row">
+          <label class="control-label">Density</label>
+          <div class="button-group" id="density-group">
+            <button class="btn-group-option" data-value="compact">Compact</button>
+            <button class="btn-group-option active" data-value="comfortable">Comfortable</button>
+            <button class="btn-group-option" data-value="spacious">Spacious</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label class="control-label">Corner Radius</label>
+          <div class="button-group" id="radius-group">
+            <button class="btn-group-option" data-value="sharp">Sharp</button>
+            <button class="btn-group-option active" data-value="rounded">Rounded</button>
+            <button class="btn-group-option" data-value="pill">Pill</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label class="control-label">Border Strength</label>
+          <div class="button-group" id="border-group">
+            <button class="btn-group-option active" data-value="subtle">Subtle</button>
+            <button class="btn-group-option" data-value="strong">Strong</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <label class="control-label checkbox-label" for="reduced-motion-toggle">
+            <input type="checkbox" id="reduced-motion-toggle" class="appear-checkbox">
+            Reduce Motion
+            <span class="control-hint">Fewer animations</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Section: Save & Manage -->
+      <section class="appear-section" id="section-manage">
+        <div class="appear-section-title">
+          <span>📦</span> Save &amp; Manage
+        </div>
+
+        <div class="manage-actions">
+          <button id="btn-export-appearance" class="btn-action-sm">📤 Export Preferences</button>
+          <button id="btn-import-appearance" class="btn-action-sm">📥 Import Preferences</button>
+          <button id="btn-reset-appearance" class="btn-action-sm btn-danger-sm">↺ Reset All to Defaults</button>
+        </div>
+        <input type="file" id="import-file-input" accept=".json" class="hidden">
+
+        <div id="appear-feedback" class="appear-feedback hidden">
+          <span id="appear-feedback-text"></span>
+        </div>
+
+        <!-- Custom Theme Management Table -->
+        <div id="custom-theme-list" class="custom-theme-list">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+    </div><!-- /appear-controls-col -->
+
+    <!-- RIGHT: Live Preview -->
+    <div class="appear-preview-col">
+      <div class="preview-sticky">
+        <div class="preview-header">
+          <div class="appear-section-title"><span>👁️</span> Live Preview</div>
+          <div class="active-theme-badge" id="active-theme-badge">Dark</div>
+        </div>
+
+        <!-- Mini Preview Card -->
+        <div class="preview-shell">
+          <!-- Mini Header -->
+          <div class="preview-app-header">
+            <div class="preview-brand">
+              <div class="preview-brand-icon">🔍</div>
+              <div>
+                <div class="preview-brand-name">ContextLens</div>
+                <div class="preview-brand-tag">Evidence before conclusions</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mini Nav -->
+          <div class="preview-nav">
+            <div class="preview-nav-item active">Compare</div>
+            <div class="preview-nav-item">Demos</div>
+            <div class="preview-nav-item">History</div>
+          </div>
+
+          <!-- Mini Source Cards -->
+          <div class="preview-sources">
+            <div class="preview-source-card preview-card-a">
+              <div class="preview-card-tag preview-tag-a">SOURCE A • CLAIM</div>
+              <div class="preview-card-text">"The DevSummit keynote takes place on Friday."</div>
+            </div>
+            <div class="preview-source-card preview-card-b">
+              <div class="preview-card-tag preview-tag-b">SOURCE B • EVIDENCE</div>
+              <div class="preview-card-text">"All talks confirmed for Saturday, Nov 15th."</div>
+            </div>
+          </div>
+
+          <!-- Mini Compare Button -->
+          <div class="preview-btn-row">
+            <div class="preview-compare-btn">⚡ Compare with ContextLens</div>
+          </div>
+
+          <!-- Mini Result Badge -->
+          <div class="preview-result-badge preview-contradiction">
+            <span>⚠️</span>
+            <div>
+              <div class="preview-badge-label">POSSIBLE CONTRADICTION</div>
+              <div class="preview-badge-sub">Incompatible event schedule claims</div>
+            </div>
+          </div>
+
+          <!-- Mini Cards -->
+          <div class="preview-result-cards">
+            <div class="preview-result-card">
+              <div class="preview-result-card-title">Analysis Summary</div>
+              <div class="preview-result-card-text">Source A cites Friday while Source B confirms Saturday, presenting mutually exclusive dates.</div>
+            </div>
+            <div class="preview-result-card">
+              <div class="preview-result-card-title">Suggested Questions</div>
+              <div class="preview-result-list">
+                <div class="preview-list-item">Which source is the official schedule?</div>
+                <div class="preview-list-item">Was the keynote rescheduled?</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mini History Item -->
+          <div class="preview-history-item">
+            <div class="preview-history-badge preview-contradiction">CONTRADICTION</div>
+            <div class="preview-history-text">A: "Keynote on Friday" vs B: "Confirmed Saturday"</div>
+          </div>
+        </div>
+        <!-- End preview-shell -->
+
+      </div>
+    </div><!-- /appear-preview-col -->
+
+  </div><!-- /appear-layout -->
+</div><!-- /app-container -->
+
+<script src="themes.js"></script>
+<script src="appearance.js"></script>
+</body>
+</html>

@@ -7,9 +7,19 @@ document.addEventListener("DOMContentLoaded", () => {
     claimB: { text: "", title: "", url: "", timestamp: null },
     lastResult: null,
     history: [],
+    historyFilter: "all",
     settings: {
       backendUrl: "http://localhost:8000",
       apiKey: ""
+    },
+    appearanceState: {
+      activeThemeId: "dark",
+      customThemes: [],
+      typography: { fontFamily: "system", fontSize: 13, lineHeight: 1.5, fontWeight: "normal" },
+      density: "comfortable",
+      radiusPreset: "rounded",
+      reducedMotion: false,
+      borderStrength: "subtle"
     }
   };
 
@@ -58,14 +68,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultDomainA = document.getElementById("result-domain-a");
   const resultDomainB = document.getElementById("result-domain-b");
   const btnCopyReport = document.getElementById("btn-copy-report");
+  const btnDownloadMd = document.getElementById("btn-download-md");
+  const btnDownloadJson = document.getElementById("btn-download-json");
   const btnSaveHistory = document.getElementById("btn-save-history");
   const btnNewComparison = document.getElementById("btn-new-comparison");
+
+  // DOM Elements - Evidence First Cards
+  const resTitleA = document.getElementById("res-title-a");
+  const resQuoteA = document.getElementById("res-quote-a");
+  const resOpenA = document.getElementById("res-open-a");
+  const resTitleB = document.getElementById("res-title-b");
+  const resQuoteB = document.getElementById("res-quote-b");
+  const resOpenB = document.getElementById("res-open-b");
+
+  // DOM Elements - Quick Chips
+  const exampleChipBtns = document.querySelectorAll(".chip-btn");
 
   // DOM Elements - History
   const historyList = document.getElementById("history-list");
   const historyEmpty = document.getElementById("history-empty");
   const historySearch = document.getElementById("history-search");
   const btnClearHistory = document.getElementById("btn-clear-history");
+  const btnExportAllHistory = document.getElementById("btn-export-all-history");
+  const historyFilterPills = document.querySelectorAll(".history-pill");
 
   // DOM Elements - Settings
   const settingBackendUrl = document.getElementById("setting-backend-url");
@@ -73,6 +98,17 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnTestBackend = document.getElementById("btn-test-backend");
   const backendStatusMsg = document.getElementById("backend-status-msg");
   const btnSaveSettings = document.getElementById("btn-save-settings");
+
+  // DOM Elements - Appearance & Themes
+  const quickThemeChips = document.getElementById("quick-theme-chips");
+  const quickPresetChips = document.getElementById("quick-preset-chips");
+  const quickDensityControl = document.getElementById("quick-density-control");
+  const quickRadiusControl = document.getElementById("quick-radius-control");
+  const quickReducedMotion = document.getElementById("quick-reduced-motion");
+  const quickStrongBorders = document.getElementById("quick-strong-borders");
+  const btnOpenAppearanceStudio = document.getElementById("btn-open-appearance-studio");
+  const btnOpenStudioBottom = document.getElementById("btn-open-studio-bottom");
+  const btnGotoAppearance = document.getElementById("btn-goto-appearance");
 
   // ----------------------------------------------------------------
   // INITIALIZATION
@@ -112,7 +148,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       );
 
-      // Listen for real-time changes from background script or content scripts
+      // Initialize themes and appearance
+      if (window.ContextLensThemes) {
+        window.ContextLensThemes.loadAppearance((app) => {
+          state.appearanceState = app || { ...window.ContextLensThemes.APPEARANCE_DEFAULTS };
+          window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+          renderQuickAppearanceControls();
+        });
+      }
+
+      // Listen for real-time changes from background script or appearance studio
       chrome.storage.onChanged.addListener((changes, area) => {
         if (area === "local") {
           if (changes.current_claim) {
@@ -128,6 +173,19 @@ document.addEventListener("DOMContentLoaded", () => {
             renderHistory();
           }
         }
+        if ((area === "local" || area === "sync") && changes.appearance && changes.appearance.newValue && window.ContextLensThemes) {
+          window.ContextLensThemes.loadAppearance((app) => {
+            state.appearanceState = app;
+            window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+            renderQuickAppearanceControls();
+          });
+        }
+      });
+    } else if (window.ContextLensThemes) {
+      window.ContextLensThemes.loadAppearance((app) => {
+        state.appearanceState = app;
+        window.ContextLensThemes.applyFullAppearance(state.appearanceState);
+        renderQuickAppearanceControls();
       });
     }
   }
@@ -185,6 +243,69 @@ document.addEventListener("DOMContentLoaded", () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("sidepanel.html") });
       }
     });
+
+    // Appearance Controls Event Listeners
+    const openAppearanceStudio = () => {
+      if (typeof chrome !== "undefined" && chrome.tabs) {
+        chrome.tabs.create({ url: chrome.runtime.getURL("appearance.html") });
+      } else {
+        window.open("appearance.html", "_blank");
+      }
+    };
+
+    if (btnOpenAppearanceStudio) btnOpenAppearanceStudio.addEventListener("click", openAppearanceStudio);
+    if (btnOpenStudioBottom) btnOpenStudioBottom.addEventListener("click", openAppearanceStudio);
+    if (btnGotoAppearance) {
+      btnGotoAppearance.addEventListener("click", () => switchTab("appearance"));
+    }
+
+    if (quickDensityControl) {
+      quickDensityControl.querySelectorAll(".seg-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const density = btn.dataset.density;
+          state.appearanceState.density = density;
+          if (window.ContextLensThemes) {
+            window.ContextLensThemes.applyDensity(density);
+            window.ContextLensThemes.saveAppearance(state.appearanceState);
+          }
+          quickDensityControl.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    }
+
+    if (quickRadiusControl) {
+      quickRadiusControl.querySelectorAll(".seg-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const radius = btn.dataset.radius;
+          state.appearanceState.radiusPreset = radius;
+          if (window.ContextLensThemes) {
+            window.ContextLensThemes.applyRadius(radius);
+            window.ContextLensThemes.saveAppearance(state.appearanceState);
+          }
+          quickRadiusControl.querySelectorAll(".seg-btn").forEach((b) => b.classList.toggle("active", b === btn));
+        });
+      });
+    }
+
+    if (quickReducedMotion) {
+      quickReducedMotion.addEventListener("change", (e) => {
+        state.appearanceState.reducedMotion = e.target.checked;
+        if (window.ContextLensThemes) {
+          window.ContextLensThemes.applyReducedMotion(e.target.checked);
+          window.ContextLensThemes.saveAppearance(state.appearanceState);
+        }
+      });
+    }
+
+    if (quickStrongBorders) {
+      quickStrongBorders.addEventListener("change", (e) => {
+        state.appearanceState.borderStrength = e.target.checked ? "strong" : "subtle";
+        if (window.ContextLensThemes) {
+          window.ContextLensThemes.applyBorderStrength(state.appearanceState.borderStrength);
+          window.ContextLensThemes.saveAppearance(state.appearanceState);
+        }
+      });
+    }
 
     // Dismiss Onboarding Hint
     if (btnDismissHint) {
@@ -258,19 +379,33 @@ document.addEventListener("DOMContentLoaded", () => {
     btnCompare.addEventListener("click", handleCompare);
     btnErrorRetry.addEventListener("click", handleCompare);
 
-    // Copy Report
-    btnCopyReport.addEventListener("click", copyMarkdownSummary);
+    // Copy & Download Reports
+    if (btnCopyReport) btnCopyReport.addEventListener("click", copyMarkdownSummary);
+    if (btnDownloadMd) btnDownloadMd.addEventListener("click", downloadMarkdownReport);
+    if (btnDownloadJson) btnDownloadJson.addEventListener("click", downloadJsonAnalysis);
 
-    // Save History
-    btnSaveHistory.addEventListener("click", () => {
-      btnSaveHistory.textContent = "Saved ✓";
-      setTimeout(() => (btnSaveHistory.textContent = "💾 Saved"), 2000);
-    });
+    // Save History Indicator
+    if (btnSaveHistory) {
+      btnSaveHistory.addEventListener("click", () => {
+        btnSaveHistory.textContent = "Saved ✓";
+        setTimeout(() => (btnSaveHistory.textContent = "💾 Saved"), 2000);
+      });
+    }
 
     // Start New Comparison
-    btnNewComparison.addEventListener("click", () => {
-      resultsSection.classList.add("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (btnNewComparison) {
+      btnNewComparison.addEventListener("click", () => {
+        resultsSection.classList.add("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    // Quick Chips Handlers
+    exampleChipBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chipType = btn.dataset.chip;
+        loadQuickChipScenario(chipType);
+      });
     });
 
     // Demos Tab Click Handlers
@@ -281,9 +416,25 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // History Search & Clear
-    historySearch.addEventListener("input", (e) => {
-      renderHistory(e.target.value);
+    // History Search & Clear & Export
+    if (historySearch) {
+      historySearch.addEventListener("input", (e) => {
+        renderHistory(e.target.value);
+      });
+    }
+
+    if (btnExportAllHistory) {
+      btnExportAllHistory.addEventListener("click", exportAllHistory);
+    }
+
+    // History Classification Filter Pills
+    historyFilterPills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        historyFilterPills.forEach((p) => p.classList.remove("active"));
+        pill.classList.add("active");
+        state.historyFilter = pill.dataset.filter || "all";
+        renderHistory(historySearch ? historySearch.value : "");
+      });
     });
 
     btnClearHistory.addEventListener("click", () => {
@@ -577,6 +728,33 @@ document.addEventListener("DOMContentLoaded", () => {
       resultQuestions.innerHTML = "<li>Review original publication dates and primary sources.</li>";
     }
 
+    // Populate Evidence-First Source Cards
+    if (resTitleA && resQuoteA) {
+      resTitleA.textContent = state.claimA.title || "Source A";
+      resQuoteA.textContent = `"${state.claimA.text || ""}"`;
+      if (resOpenA) {
+        if (state.claimA.url) {
+          resOpenA.href = state.claimA.url;
+          resOpenA.style.display = "inline-block";
+        } else {
+          resOpenA.style.display = "none";
+        }
+      }
+    }
+
+    if (resTitleB && resQuoteB) {
+      resTitleB.textContent = state.claimB.title || "Source B";
+      resQuoteB.textContent = `"${state.claimB.text || ""}"`;
+      if (resOpenB) {
+        if (state.claimB.url) {
+          resOpenB.href = state.claimB.url;
+          resOpenB.style.display = "inline-block";
+        } else {
+          resOpenB.style.display = "none";
+        }
+      }
+    }
+
     // Source links
     const urlA = state.claimA.url || "#";
     const urlB = state.claimB.url || "#";
@@ -601,8 +779,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------------------------------------
-  // DEMONSTRATION MODE
+  // QUICK CHIPS & DEMO SCENARIOS
   // ----------------------------------------------------------------
+  function loadQuickChipScenario(chipType) {
+    switchTab("compare");
+
+    if (chipType === "museum") {
+      state.claimA = {
+        id: "chip_museum_a",
+        text: "The museum is open from 9 to 5 on weekdays.",
+        title: "City Museum Official Hours",
+        url: "https://citymuseum.mock/hours",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_museum_b",
+        text: "Visitor information lists the museum weekday opening from 9 to 5.",
+        title: "Metro Tourism Guide",
+        url: "https://metrotourism.mock/museum-guide",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "conference") {
+      state.claimA = {
+        id: "chip_conf_a",
+        text: "The DevSummit 2026 opening keynote takes place on Friday, November 14th at 9:00 AM.",
+        title: "TechNews Daily - Preview",
+        url: "https://technewsdaily.mock/devsummit-preview",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_conf_b",
+        text: "All main conference talks including the opening keynote are confirmed for Saturday, November 15th.",
+        title: "EventHub Official Schedule",
+        url: "https://eventhub.mock/devsummit-official",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "pricing") {
+      state.claimA = {
+        id: "chip_price_a",
+        text: "The ZenBook Ultra is listed starting at $499 on the manufacturer product page.",
+        title: "HardwareDigest Review",
+        url: "https://hardwaredigest.mock/zenbook-review",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_price_b",
+        text: "The total order came to $549 for the ZenBook Ultra at checkout with shipping and taxes.",
+        title: "Buyer Forum Receipt",
+        url: "https://buyerforum.mock/zenbook-order-549",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "jobs") {
+      state.claimA = {
+        id: "chip_jobs_a",
+        text: "Youth unemployment increased by 3.8% reaching record levels in the latest quarterly survey.",
+        title: "Economic Monitor Report",
+        url: "https://econmonitor.mock/youth-jobs-report",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_jobs_b",
+        text: "Youth joblessness dropped to an all-time low of 7.2% as new tech internships surged.",
+        title: "Global Career Insights",
+        url: "https://careerinsights.mock/labor-statistics",
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    updateCardA();
+    updateCardB();
+    saveCurrentInputs();
+
+    setTimeout(() => {
+      handleCompare();
+    }, 150);
+  }
+
   function loadDemoScenario(scenarioKey) {
     switchTab("compare");
 
@@ -920,13 +1172,21 @@ document.addEventListener("DOMContentLoaded", () => {
     historyBadge.textContent = state.history.length;
 
     const filtered = state.history.filter((item) => {
+      const classification = (item.result?.classification || "").toLowerCase();
+
+      // Check category filter pill
+      if (state.historyFilter && state.historyFilter !== "all") {
+        if (!classification.includes(state.historyFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
       if (!query) return true;
       const q = query.toLowerCase();
       const textA = (item.claim_a?.text || "").toLowerCase();
       const textB = (item.claim_b?.text || "").toLowerCase();
       const titleA = (item.claim_a?.title || "").toLowerCase();
       const titleB = (item.claim_b?.title || "").toLowerCase();
-      const classification = (item.result?.classification || "").toLowerCase();
       return (
         textA.includes(q) ||
         textB.includes(q) ||
@@ -1064,11 +1324,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function copyMarkdownSummary() {
-    if (!state.lastResult) return;
+  function buildMarkdownSummary() {
+    if (!state.lastResult) return "";
     const res = state.lastResult;
 
-    const md = `### ContextLens Analysis Report
+    return `### ContextLens Analysis Report
 **Classification:** ${res.classification.toUpperCase()}
 
 **Source A (${state.claimA.title || "Source A"}):**
@@ -1094,6 +1354,55 @@ ${(res.verification_questions || []).map((q) => `- ${q}`).join("\n")}
 ---
 *Generated by ContextLens - "Evidence before conclusions."*
 `;
+  }
+
+  function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function downloadMarkdownReport() {
+    if (!state.lastResult) return;
+    const md = buildMarkdownSummary();
+    const filename = `ContextLens_Report_${Date.now()}.md`;
+    downloadFile(md, filename, "text/markdown;charset=utf-8");
+  }
+
+  function downloadJsonAnalysis() {
+    if (!state.lastResult) return;
+    const data = {
+      timestamp: new Date().toISOString(),
+      claim_a: state.claimA,
+      claim_b: state.claimB,
+      result: state.lastResult
+    };
+    const json = JSON.stringify(data, null, 2);
+    const filename = `ContextLens_Analysis_${Date.now()}.json`;
+    downloadFile(json, filename, "application/json;charset=utf-8");
+  }
+
+  function exportAllHistory() {
+    if (!state.history || state.history.length === 0) {
+      alert("No research history to export yet. Perform some comparisons first!");
+      return;
+    }
+    const json = JSON.stringify(state.history, null, 2);
+    const filename = `ContextLens_History_${Date.now()}.json`;
+    downloadFile(json, filename, "application/json;charset=utf-8");
+  }
+
+  function copyMarkdownSummary() {
+    const md = buildMarkdownSummary();
+    if (!md) return;
 
     navigator.clipboard.writeText(md).then(() => {
       btnCopyReport.textContent = "Copied ✓";
@@ -1105,5 +1414,77 @@ ${(res.verification_questions || []).map((q) => `- ${q}`).join("\n")}
     const div = document.createElement("div");
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  // ----------------------------------------------------------------
+  // QUICK APPEARANCE CONTROLS RENDERER
+  // ----------------------------------------------------------------
+  function renderQuickAppearanceControls() {
+    if (!window.ContextLensThemes) return;
+    const T = window.ContextLensThemes;
+    const app = state.appearanceState || T.APPEARANCE_DEFAULTS;
+
+    // Render Quick Theme Chips
+    if (quickThemeChips) {
+      quickThemeChips.innerHTML = "";
+      const allThemes = [...T.BUILTIN_THEMES, ...(app.customThemes || [])];
+      allThemes.forEach((t) => {
+        const chip = document.createElement("button");
+        chip.className = `quick-theme-chip ${t.id === app.activeThemeId ? "active" : ""}`;
+        chip.title = `${t.name} (${t.category || "theme"})`;
+        chip.innerHTML = `
+          <span class="chip-color-swatch" style="background: ${t.tokens['--bg-surface'] || '#111827'}; border: 2px solid ${t.tokens['--accent-violet'] || '#8b5cf6'}"></span>
+          <span class="chip-name">${t.emoji || "🎨"} ${escapeHtml(t.name)}</span>
+        `;
+        chip.addEventListener("click", () => {
+          app.activeThemeId = t.id;
+          T.applyFullAppearance(app);
+          T.saveAppearance(app);
+          renderQuickAppearanceControls();
+        });
+        quickThemeChips.appendChild(chip);
+      });
+    }
+
+    // Render Quick Workflow Presets
+    if (quickPresetChips) {
+      quickPresetChips.innerHTML = "";
+      T.PERSONALIZATION_PRESETS.forEach((p) => {
+        const btn = document.createElement("button");
+        btn.className = "quick-preset-chip";
+        btn.title = p.description;
+        btn.innerHTML = `<span class="preset-emoji">${p.emoji}</span> <span class="preset-name">${escapeHtml(p.name)}</span>`;
+        btn.addEventListener("click", () => {
+          app.activeThemeId = p.themeId;
+          app.typography = { ...p.typography };
+          app.density = p.density;
+          app.radiusPreset = p.radiusPreset;
+          app.reducedMotion = p.reducedMotion;
+          app.borderStrength = p.borderStrength;
+          T.applyFullAppearance(app);
+          T.saveAppearance(app);
+          renderQuickAppearanceControls();
+        });
+        quickPresetChips.appendChild(btn);
+      });
+    }
+
+    // Sync segmented controls & toggles
+    if (quickDensityControl) {
+      quickDensityControl.querySelectorAll(".seg-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.density === app.density);
+      });
+    }
+    if (quickRadiusControl) {
+      quickRadiusControl.querySelectorAll(".seg-btn").forEach((b) => {
+        b.classList.toggle("active", b.dataset.radius === app.radiusPreset);
+      });
+    }
+    if (quickReducedMotion) {
+      quickReducedMotion.checked = !!app.reducedMotion;
+    }
+    if (quickStrongBorders) {
+      quickStrongBorders.checked = app.borderStrength === "strong";
+    }
   }
 });
