@@ -8,9 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
     lastResult: null,
     history: [],
     historyFilter: "all",
+    selectedProvider: "groq",
     settings: {
       backendUrl: "http://localhost:8000",
-      apiKey: ""
+      apiKey: "",
+      defaultProvider: "groq"
     },
     appearanceState: {
       activeThemeId: "dark",
@@ -106,7 +108,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnExportAllHistory = document.getElementById("btn-export-all-history");
   const historyFilterPills = document.querySelectorAll(".history-pill");
 
-  // DOM Elements - Settings
+  // DOM Elements - Settings & Provider Selection
+  const providerToggleBtns = document.querySelectorAll(".provider-toggle-btn");
+  const settingDefaultProvider = document.getElementById("setting-default-provider");
   const settingBackendUrl = document.getElementById("setting-backend-url");
   const settingApiKey = document.getElementById("setting-api-key");
   const btnTestBackend = document.getElementById("btn-test-backend");
@@ -137,7 +141,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function loadStoredData() {
     if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
       chrome.storage.local.get(
-        ["current_claim", "current_evidence", "history", "settings", "dismiss_hint"],
+        ["current_claim", "current_evidence", "history", "settings", "dismiss_hint", "selected_provider"],
         (res) => {
           if (res.current_claim) {
             state.claimA = res.current_claim;
@@ -151,10 +155,17 @@ document.addEventListener("DOMContentLoaded", () => {
             state.history = res.history;
             renderHistory();
           }
+          if (res.selected_provider) {
+            state.selectedProvider = res.selected_provider;
+            updateProviderUI(state.selectedProvider);
+          }
           if (res.settings) {
             state.settings = { ...state.settings, ...res.settings };
             settingBackendUrl.value = state.settings.backendUrl || "http://localhost:8000";
             settingApiKey.value = state.settings.apiKey || "";
+            if (settingDefaultProvider) {
+              settingDefaultProvider.value = state.settings.defaultProvider || state.selectedProvider || "groq";
+            }
           }
           if (res.dismiss_hint && quickHint) {
             quickHint.classList.add("hidden");
@@ -461,17 +472,62 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    // Provider Switcher Buttons
+    document.querySelectorAll(".provider-toggle-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const prov = btn.dataset.provider;
+        const changed = state.selectedProvider !== prov;
+        state.selectedProvider = prov;
+        updateProviderUI(prov);
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ selected_provider: prov });
+        }
+        // If results section is currently displayed and model was changed, immediately re-run comparison
+        if (changed && !resultsSection.classList.contains("hidden") && textA.value.trim().length >= 5 && textB.value.trim().length >= 5) {
+          handleCompare();
+        }
+      });
+    });
+
+    if (settingDefaultProvider) {
+      settingDefaultProvider.addEventListener("change", (e) => {
+        const prov = e.target.value;
+        state.selectedProvider = prov;
+        updateProviderUI(prov);
+        if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+          chrome.storage.local.set({ selected_provider: prov });
+        }
+      });
+    }
+
     // Settings actions
     btnTestBackend.addEventListener("click", checkBackendHealth);
     btnSaveSettings.addEventListener("click", () => {
       state.settings.backendUrl = settingBackendUrl.value.trim().replace(/\/+$/, "");
       state.settings.apiKey = settingApiKey.value.trim();
+      if (settingDefaultProvider) {
+        state.settings.defaultProvider = settingDefaultProvider.value;
+        state.selectedProvider = settingDefaultProvider.value;
+        updateProviderUI(state.selectedProvider);
+      }
       if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.set({ settings: state.settings });
+        chrome.storage.local.set({
+          settings: state.settings,
+          selected_provider: state.selectedProvider
+        });
       }
       alert("Settings saved successfully!");
       checkBackendHealth();
     });
+  }
+
+  function updateProviderUI(activeProvider) {
+    document.querySelectorAll(".provider-toggle-btn").forEach((b) => {
+      b.classList.toggle("active", b.dataset.provider === activeProvider);
+    });
+    if (settingDefaultProvider) {
+      settingDefaultProvider.value = activeProvider;
+    }
   }
 
   function switchTab(tabName) {
@@ -605,19 +661,22 @@ document.addEventListener("DOMContentLoaded", () => {
         text: text2,
         title: state.claimB.title || "Source B",
         url: state.claimB.url || ""
-      }
+      },
+      provider: state.selectedProvider || "groq"
     };
 
     try {
       let analysisResult = null;
       const backendUrl = state.settings.backendUrl || "http://localhost:8000";
 
+      let backendError = null;
       // Try contacting FastAPI backend
       try {
         const response = await fetch(`${backendUrl}/compare`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "X-Provider": state.selectedProvider || "groq",
             ...(state.settings.apiKey ? { "X-API-Key": state.settings.apiKey } : {})
           },
           body: JSON.stringify(payload)
@@ -626,15 +685,28 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.ok) {
           analysisResult = await response.json();
         } else {
-          console.warn(`Backend returned ${response.status}. Falling back to client-side engine.`);
+          let errDetail = `HTTP ${response.status}`;
+          try {
+            const errJson = await response.json();
+            if (errJson && errJson.detail) errDetail = errJson.detail;
+          } catch (_) {}
+          backendError = `Backend returned ${errDetail}`;
+          console.warn(`Backend returned ${response.status} (${errDetail}). Falling back to client-side engine.`);
         }
       } catch (networkErr) {
+        backendError = `Backend unreachable at ${backendUrl}`;
         console.warn("Backend not reachable. Using built-in ContextLens engine fallback:", networkErr);
       }
 
-      // If backend failed or was unreachable, use high-fidelity built-in engine
+      // If backend failed or was unreachable, use built-in heuristic engine
       if (!analysisResult) {
         analysisResult = runClientHeuristicAnalysis(payload.claim_a, payload.claim_b);
+        if (backendError) {
+          analysisResult.limitations = [
+            `Backend notice: ${backendError}. Real AI analysis requires the backend to be running with an active LLM provider (run 'python -m uvicorn backend.main:app --port 8000').`,
+            ...(analysisResult.limitations || [])
+          ];
+        }
       }
 
       state.lastResult = analysisResult;
@@ -713,12 +785,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Engine badge
     if (engineBadge) {
-      if (result.engine === "heuristic" || result.is_heuristic_fallback) {
+      const isHeuristic = result.engine === "heuristic" || Boolean(result.is_heuristic_fallback);
+      const isAI = !isHeuristic && (
+        result.engine === "llm" ||
+        (typeof result.engine === "string" && (
+          result.engine.includes("langchain") ||
+          result.engine.includes("groq") ||
+          result.engine.includes("gemini") ||
+          result.engine.includes("openai") ||
+          result.engine.includes("anthropic") ||
+          result.engine.includes("local") ||
+          result.engine.includes("qwen")
+        ))
+      );
+
+      if (isHeuristic) {
         engineBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Heuristic`;
         engineBadge.className = "engine-badge engine-heuristic";
         engineBadge.classList.remove("hidden");
-      } else if (result.engine === "llm" || !result.is_heuristic_fallback) {
-        engineBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> AI`;
+      } else if (isAI) {
+        const aiSvg = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>`;
+        let label = `${aiSvg} AI`;
+        const engStr = String(result.engine || "").toLowerCase();
+        if (engStr.includes("groq")) {
+          label = `${aiSvg} Groq`;
+        } else if (engStr.includes("gemini")) {
+          label = `${aiSvg} Gemini`;
+        } else if (engStr.includes("openai") || engStr.includes("gpt")) {
+          label = `${aiSvg} OpenAI`;
+        } else if (engStr.includes("anthropic") || engStr.includes("claude")) {
+          label = `${aiSvg} Claude`;
+        } else if (engStr.includes("local") || engStr.includes("qwen")) {
+          label = `${aiSvg} Local Qwen`;
+        }
+        engineBadge.innerHTML = label;
         engineBadge.className = "engine-badge engine-llm";
         engineBadge.classList.remove("hidden");
       } else {
@@ -1088,10 +1188,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 150);
   }
 
-  // ----------------------------------------------------------------
-  // CLIENT-SIDE HEURISTIC / OFFLINE ANALYSIS ENGINE
-  // ----------------------------------------------------------------
   function runClientHeuristicAnalysis(claimA, claimB) {
+    const raw = _computeClientHeuristic(claimA, claimB);
+    return {
+      ...raw,
+      engine: "heuristic",
+      is_heuristic_fallback: true,
+      confidence_reason: raw.confidence_reason || "Offline keyword matching heuristic; no LLM semantic analysis."
+    };
+  }
+
+  function _computeClientHeuristic(claimA, claimB) {
     const tA = (claimA.text || "").toLowerCase();
     const tB = (claimB.text || "").toLowerCase();
 
@@ -1296,7 +1403,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Default balanced context comparison
     return {
       classification: "different_context",
-      explanation: "Both passages discuss related subjects, but variations in emphasis, perspective, or timing suggest they describe different facets rather than direct contradictions.",
+      explanation: "[Offline Heuristic Mode] Both passages discuss related subjects, but semantic analysis was limited because the ContextLens AI backend was not reachable. Ensure the backend server is running for genuine LLM analysis.",
       key_differences: [
         `${labelA} states: "${claimA.text.substring(0, 70)}..."`,
         `${labelB} states: "${claimB.text.substring(0, 70)}..."`,

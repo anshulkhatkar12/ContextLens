@@ -1633,3 +1633,247 @@ input, textarea, button, select {
 .hidden {
   display: none !important;
 }
+
+/* =========================================================
+   ContextLens v2 – New Result UI Styles
+   ========================================================= */
+
+/* Engine badge in classification banner */
+.engine-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  align-self: flex-start;
+}
+.engine-llm {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+}
+.engine-heuristic {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* New classification badge variants */
+.badge-partial {
+  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.08);
+}
+.badge-partial .badge-icon { color: #f59e0b; }
+.badge-partial .badge-label { color: #fbbf24; }
+
+.badge-unrelated {
+  border-color: rgba(100, 116, 139, 0.3);
+  background: rgba(100, 116, 139, 0.08);
+}
+.badge-unrelated .badge-icon { color: #64748b; }
+.badge-unrelated .badge-label { color: #94a3b8; }
+
+/* Confidence bar */
+.confidence-card {
+  padding: 12px 14px;
+}
+.confidence-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.confidence-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease, background 0.4s ease;
+}
+.confidence-pct {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  min-width: 32px;
+  text-align: right;
+}
+.confidence-reason-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin: 0;
+}
+
+/* Supporting evidence card */
+.supporting-card { border-left: 2px solid #10b981; }
+.supporting-title { color: #10b981; }
+.supporting-card .result-list li::marker { color: #10b981; }
+
+/* Contradicting evidence card */
+.contradicting-card { border-left: 2px solid #f43f5e; }
+.contradicting-title { color: #f43f5e; }
+.contradicting-card .result-list li::marker { color: #f43f5e; }
+
+/* Limitations card */
+.limitations-card { border-left: 2px solid rgba(148, 163, 184, 0.4); }
+.limitations-list li {
+  color: var(--text-muted);
+  font-size: 11.5px;
+}
+
+/* Additional sources panel */
+.additional-sources-card {
+  padding: 14px;
+}
+.sources-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.additional-source-item {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+.additional-source-item:last-child { margin-bottom: 0; }
+.additional-source-item:hover { border-color: rgba(139, 92, 246, 0.3); }
+
+.source-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+}
+.source-rel-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.rel-supports   { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.rel-contradicts{ background: rgba(244, 63, 94, 0.15);  color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3); }
+.rel-context    { background: rgba(56, 189, 248, 0.12); color: #67e8f9; border: 1px solid rgba(56, 189, 248, 0.25); }
+.rel-unclear    { background: rgba(148, 163, 184, 0.12);color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.2); }
+
+.source-retrieval-label {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-left: auto;
+}
+.source-item-title {
+  display: block;
+  color: var(--accent-cyan);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  margin-bottom: 3px;
+  transition: color 0.15s;
+  word-break: break-word;
+}
+.source-item-title:hover { color: #7dd3fc; text-decoration: underline; }
+.source-item-publisher {
+  font-size: 10px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+}
+.source-item-relevance {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.source-item-excerpt {
+  font-size: 11px;
+  color: var(--text-dim);
+  border-left: 2px solid var(--border-subtle);
+  padding-left: 8px;
+  margin: 5px 0 4px 0;
+  font-style: italic;
+  line-height: 1.45;
+}
+.source-item-limitations {
+  font-size: 10.5px;
+  color: #f59e0b;
+  margin-top: 4px;
+  opacity: 0.85;
+}
+
+/* Provider Switcher */
+.provider-switch-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 10px 0 6px 0;
+  padding: 6px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+.provider-switch-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.provider-toggle-group {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-primary);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+.provider-toggle-btn {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.provider-toggle-btn:hover {
+  color: var(--text-main);
+  background: var(--bg-hover);
+}
+.provider-toggle-btn.active {
+  background: var(--accent-violet);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(139, 92, 246, 0.4);
+}
+
+.results-provider-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  margin-bottom: 12px;
+}
+
+.results-provider-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+

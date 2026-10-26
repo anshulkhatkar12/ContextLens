@@ -73,6 +73,7 @@ def read_root():
 @app.get("/health")
 def health_check():
     provider = get_configured_provider_name()
+    has_groq      = bool(os.getenv("GROQ_API_KEY"))
     has_gemini    = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
     has_openai    = bool(os.getenv("OPENAI_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
@@ -85,7 +86,10 @@ def health_check():
     local_model   = os.getenv("LOCAL_MODEL", os.getenv("OLLAMA_MODEL", "qwen2.5:latest"))
     local_url     = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434"))
 
-    if llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_openai or has_anthropic)):
+    if provider == "groq" or (has_groq and not (has_gemini or has_openai or has_anthropic)):
+        engine_name = f"Groq ({os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')}) [via LangChain]"
+        llm_active = True
+    elif llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_openai or has_anthropic)):
         engine_name = f"Local Qwen ({local_model}) [No API Key Required]"
         llm_active = True
     elif has_gemini:
@@ -120,7 +124,7 @@ def health_check():
         "api_version": "2.0.0",
         "engine": engine_name,
         "llm_provider": provider,
-        "llm_configured": llm_active or (has_gemini or has_openai or has_anthropic),
+        "llm_configured": llm_active or (has_groq or has_gemini or has_openai or has_anthropic),
         "local_model": local_model,
         "local_endpoint": local_url,
         "guardrails_enabled": True,
@@ -214,11 +218,12 @@ async def search_evidence_sources(
 async def compare_claims(
     req: CompareRequest,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_provider: Optional[str] = Header(None, alias="X-Provider"),
 ):
     """
     Compare two text passages using AI-powered semantic analysis with LangChain.
 
-    - Uses the configured LLM (Gemini / OpenAI / Anthropic) with Pydantic structured output.
+    - Uses the requested LLM provider (Groq / Gemini / OpenAI / Anthropic) with Pydantic structured output.
     - Falls back to a clearly-labelled heuristic engine if no API key is set.
     - Discovers and evaluates additional sources when search is enabled.
     - API keys are kept server-side only and never returned in the response.
@@ -245,13 +250,15 @@ async def compare_claims(
         )
 
     title_b = req.claim_b.title if req.claim_b else "External Discovery"
-    logger.info("Comparing: A='%s' B='%s'", req.claim_a.title or "untitled", title_b or "untitled")
+    chosen_provider = req.provider or x_provider or None
+    logger.info("Comparing (provider=%s): A='%s' B='%s'", chosen_provider or "default", req.claim_a.title or "untitled", title_b or "untitled")
 
     try:
         response = await analyze_passages(
             claim_a=req.claim_a,
             claim_b=req.claim_b,
             api_key_override=x_api_key,
+            provider_override=chosen_provider,
             include_search=req.include_search,
             max_search_results=req.max_search_results,
         )

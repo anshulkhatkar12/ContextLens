@@ -1,25 +1,31 @@
-# Virtual Environment
+# Environment variables and secrets
+.env
+.env.*
+*.env
+backend/.env
+!.env.example
+!backend/.env.example
+
+# Python virtual environments
 venv/
-env/
 .venv/
+env/
 
 # Python cache
 __pycache__/
 *.py[cod]
 *$py.class
 
-# Pytest & Testing
+# Test and tool caches
 .pytest_cache/
 .coverage
 htmlcov/
+.mypy_cache/
+.ruff_cache/
 
-# Local Environment Variables & Secrets
-.env
-backend/.env
-
-# Local Backups
+# Local backups
 backups/
 
-# OS Specific
+# OS and editor files
 .DS_Store
 Thumbs.db

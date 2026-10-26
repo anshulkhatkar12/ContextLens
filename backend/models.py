@@ -52,6 +52,8 @@ class CompareRequest(BaseModel):
     claim_b: Optional[ClaimItem] = Field(default=None, description="Secondary passage or evidence")
     include_search: bool = Field(default=False, description="Whether to discover additional web sources")
     max_search_results: int = Field(default=3, ge=1, le=10, description="Max search sources to retrieve")
+    provider: Optional[str] = Field(default=None, description="Explicit LLM provider: 'groq' | 'gemini' | 'openai' | 'anthropic'")
+    model: Optional[str] = Field(default=None, description="Model identifier override")
 
 
 # ---------------------------------------------------------------------------

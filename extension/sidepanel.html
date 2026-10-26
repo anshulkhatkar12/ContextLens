@@ -159,6 +159,15 @@
         </section>
       </div>
 
+      <!-- Model Provider Switcher -->
+      <div class="provider-switch-container">
+        <span class="provider-switch-title">AI Provider:</span>
+        <div class="provider-toggle-group" id="provider-toggle-group">
+          <button type="button" class="provider-toggle-btn active" data-provider="groq" title="Groq: Ultra-fast cloud inference">Groq (Fast)</button>
+          <button type="button" class="provider-toggle-btn" data-provider="gemini" title="Google Gemini: Multi-modal AI reasoning">Gemini</button>
+        </div>
+      </div>
+
       <!-- Comparison Controls -->
       <div class="compare-controls">
         <button id="btn-compare" class="btn-primary-compare">
@@ -200,6 +209,15 @@
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
               JSON
             </button>
+          </div>
+        </div>
+
+        <!-- Inline Results Provider Switcher -->
+        <div class="results-provider-bar">
+          <span class="results-provider-label">Active Model:</span>
+          <div class="provider-toggle-group" id="results-toggle-group">
+            <button type="button" class="provider-toggle-btn active" data-provider="groq" title="Groq: Ultra-fast cloud inference">Groq (Fast)</button>
+            <button type="button" class="provider-toggle-btn" data-provider="gemini" title="Google Gemini: Multi-modal AI reasoning">Gemini</button>
           </div>
         </div>
 
@@ -449,9 +467,20 @@
       </div>
 
       <div class="settings-group">
+        <label class="settings-label" for="setting-default-provider">Default AI Provider</label>
+        <select id="setting-default-provider" class="settings-input" style="cursor: pointer;">
+          <option value="groq" selected>Groq (Ultra-Fast Cloud Inference - Active)</option>
+          <option value="gemini">Google Gemini (via LangChain)</option>
+          <option value="openai">OpenAI GPT</option>
+          <option value="anthropic">Anthropic Claude</option>
+        </select>
+        <p class="settings-hint">Select your preferred default LLM provider. You can also toggle between Groq and Gemini on the Compare screen.</p>
+      </div>
+
+      <div class="settings-group">
         <label class="settings-label" for="setting-api-key">LLM API Key (Optional Override)</label>
-        <input type="password" id="setting-api-key" class="settings-input" placeholder="sk-... (OpenAI) / AIza... (Gemini) / sk-ant-... (Claude)">
-        <p class="settings-hint">Automatically routes OpenAI, Gemini, or Claude keys. If left blank, ContextLens uses its built-in offline context engine.</p>
+        <input type="password" id="setting-api-key" class="settings-input" placeholder="gsk-... (Groq) / AIza... (Gemini) / sk-... (OpenAI)">
+        <p class="settings-hint">Automatically routes Groq (gsk_...), Gemini (AIza...), OpenAI (sk-...), or Claude keys.</p>
       </div>
 
       <div class="settings-card">
