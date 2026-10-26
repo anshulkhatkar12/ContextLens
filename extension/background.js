@@ -38,6 +38,21 @@ chrome.runtime.onInstalled.addListener(() => {
         }
       });
     }
+    chrome.storage.local.get(["appearance"], (appRes) => {
+      if (!appRes.appearance) {
+        chrome.storage.local.set({
+          appearance: {
+            activeThemeId: "dark",
+            customThemes: [],
+            typography: { fontFamily: "system", fontSize: 13, lineHeight: 1.5, fontWeight: "normal" },
+            density: "comfortable",
+            radiusPreset: "rounded",
+            reducedMotion: false,
+            borderStrength: "subtle"
+          }
+        });
+      }
+    });
   });
 });
 
@@ -87,6 +102,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.sidePanel.open({ tabId: sender.tab.id }).catch((err) => {
       console.warn("Could not open sidePanel:", err);
     });
+    sendResponse({ status: "ok" });
+    return true;
+  }
+
+  if (message.type === "OPEN_APPEARANCE") {
+    if (chrome.runtime.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    } else {
+      chrome.tabs.create({ url: chrome.runtime.getURL("appearance.html") });
+    }
     sendResponse({ status: "ok" });
     return true;
   }

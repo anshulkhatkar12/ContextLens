@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ContextLens</title>
   <link rel="stylesheet" href="sidepanel.css">
+  <link rel="stylesheet" href="appearance.css">
   <style>
     /* Popup specific dimension constraints */
     body {
@@ -66,6 +67,10 @@
       <button class="nav-tab" data-tab="history">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         History <span id="history-badge" class="badge-count">0</span>
+      </button>
+      <button class="nav-tab" data-tab="appearance" title="Themes &amp; Personalization">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.563-2.512 5.563-5.563C22 6.5 17.5 2 12 2z"/></svg>
+        Themes
       </button>
       <button class="nav-tab" data-tab="settings">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -378,12 +383,85 @@
         </ul>
       </div>
 
+      <div class="settings-card">
+        <div class="card-subtitle">🎨 Personalization &amp; Themes</div>
+        <p class="settings-hint" style="margin-bottom: 10px;">Select from 9 color palettes, customize typography and density, or design custom themes.</p>
+        <button id="btn-goto-appearance" class="btn-action-sm">Customize Appearance 🎨</button>
+      </div>
+
       <div class="settings-footer">
         <button id="btn-save-settings" class="btn-primary-sm">Save Preferences</button>
       </div>
     </section>
+
+    <!-- TAB 5: THEMES & PERSONALIZATION -->
+    <section id="tab-appearance" class="tab-content">
+      <div class="tab-header">
+        <div class="history-header-row">
+          <h2 class="tab-title">Themes &amp; Style</h2>
+          <button id="btn-open-appearance-studio" class="btn-action-sm" title="Open full appearance studio in tab">Studio ↗</button>
+        </div>
+        <p class="tab-subtitle">Instant palettes, density &amp; display controls for ContextLens.</p>
+      </div>
+
+      <!-- Quick Theme Gallery -->
+      <div class="settings-group">
+        <label class="settings-label">Color Themes</label>
+        <div id="quick-theme-chips" class="quick-theme-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Quick Workflow Presets -->
+      <div class="settings-group">
+        <label class="settings-label">Workflow Presets</label>
+        <div id="quick-preset-chips" class="quick-preset-grid">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Display & Density -->
+      <div class="settings-group">
+        <label class="settings-label">Interface Density</label>
+        <div class="segmented-control" id="quick-density-control">
+          <button class="seg-btn" data-density="compact">Compact</button>
+          <button class="seg-btn active" data-density="comfortable">Comfortable</button>
+          <button class="seg-btn" data-density="spacious">Spacious</button>
+        </div>
+      </div>
+
+      <!-- Corner Radius -->
+      <div class="settings-group">
+        <label class="settings-label">Corner Radius</label>
+        <div class="segmented-control" id="quick-radius-control">
+          <button class="seg-btn" data-radius="sharp">Sharp</button>
+          <button class="seg-btn active" data-radius="rounded">Rounded</button>
+          <button class="seg-btn" data-radius="pill">Pill</button>
+        </div>
+      </div>
+
+      <!-- Accessibility / Motion Toggles -->
+      <div class="settings-card">
+        <div class="card-subtitle">⚡ Accessibility &amp; Motion</div>
+        <div class="toggle-row">
+          <label for="quick-reduced-motion" class="toggle-label">Reduced Motion</label>
+          <input type="checkbox" id="quick-reduced-motion" class="toggle-checkbox">
+        </div>
+        <div class="toggle-row" style="margin-top: 8px;">
+          <label for="quick-strong-borders" class="toggle-label">Enhanced Card Borders</label>
+          <input type="checkbox" id="quick-strong-borders" class="toggle-checkbox">
+        </div>
+      </div>
+
+      <div class="settings-footer" style="margin-top: 16px;">
+        <button id="btn-open-studio-bottom" class="btn-primary-sm" style="width: 100%; justify-content: center;">
+          🎨 Open Full Theme Studio &amp; Color Editor
+        </button>
+      </div>
+    </section>
   </div>
 
+  <script src="themes.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>
