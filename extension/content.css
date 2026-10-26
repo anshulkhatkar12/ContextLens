@@ -260,3 +260,116 @@
     transform: translateY(-8px);
   }
 }
+
+/* 4. In-Page Floating Comparison Window (Entire Comparison Workspace Movable All Around Webpage) */
+#contextlens-floating-window {
+  position: fixed;
+  z-index: 2147483647;
+  top: 55px;
+  right: 25px;
+  width: 420px;
+  height: 640px;
+  max-width: calc(100vw - 30px);
+  max-height: calc(100vh - 50px);
+  min-width: 320px;
+  min-height: 200px;
+  background: #0f172a;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.75), 0 0 25px rgba(139, 92, 246, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+  animation: contextlensFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  resize: both;
+  touch-action: none;
+}
+
+#contextlens-floating-window.is-minimized {
+  height: 40px !important;
+  resize: none !important;
+}
+
+#contextlens-floating-window.is-minimized .contextlens-window-body {
+  display: none !important;
+}
+
+#contextlens-floating-window.is-dragging {
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.85), 0 0 35px rgba(139, 92, 246, 0.4);
+}
+
+.contextlens-window-header {
+  height: 38px;
+  background: rgba(15, 23, 42, 0.98);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.contextlens-window-header:active {
+  cursor: grabbing;
+}
+
+.contextlens-window-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #c4b5fd;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.2px;
+}
+
+.contextlens-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.contextlens-win-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+}
+
+.contextlens-win-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f1f5f9;
+}
+
+.contextlens-win-btn.btn-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.contextlens-window-body {
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 38px);
+  position: relative;
+  background: #0f172a;
+}
+
+.contextlens-window-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: #0f172a;
+}
