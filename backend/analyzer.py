@@ -678,6 +678,7 @@ async def analyze_passages(
         analysis.source_references = source_refs
 
         additional_sources: List[AdditionalSource] = []
+        search_error: Optional[str] = None
         if ENABLE_SOURCE_SEARCH:
             try:
                 verification_questions = analysis.verification_questions or []
@@ -692,6 +693,12 @@ async def analyze_passages(
                     )
             except Exception as exc:
                 logger.warning("Source discovery failed: %s", exc)
+                search_error = f"Source search encountered an error: {exc}"
+
+        if search_error:
+            current_limitations = list(analysis.limitations or [])
+            current_limitations.append(search_error)
+            analysis.limitations = current_limitations
 
         if additional_sources:
             verified_urls = {claim_a.url, claim_b.url} | {s.url for s in additional_sources if s.url}
