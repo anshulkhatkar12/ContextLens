@@ -50,13 +50,21 @@ ContextLens never automatically declares a source false. Instead, it exposes the
    - **Suggested Verification Questions:** Actionable follow-up queries.
    - **Discovered Sources:** Independent links with AI relevance assessments.
 
-5. **Multi-Model AI Flexibility + Zero-API Fallback:**
-   - Supports Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), and Anthropic Claude (`claude-3-5-haiku`).
-   - Graceful deterministic heuristic engine if no API keys are provided — fully offline-capable.
+5. **Local Models (Qwen) Without API Keys + Multi-Layer Guardrails:**
+   - **Zero API Keys Required:** Runs directly with local LLMs such as **Qwen** (`qwen2.5:latest`, `qwen2.5:7b`, `qwen2.5:1.5b`) via Ollama (`http://localhost:11434`), LM Studio, or vLLM.
+   - **AI Safety & Grounding Guardrails:**
+     - 🛡️ **Prompt Injection Defense:** Neutralizes system override instructions, DAN jailbreaks, and adversarial directives embedded in untrusted input passages.
+     - 🔍 **Grounding & Anti-Hallucination Guardrail:** Lexically and semantically verifies that quotes and points cited are genuinely grounded in the source passages, discarding fabricated claims.
+     - 🏷️ **Canonical Taxonomy Enforcement:** Strict normalization into the 6 canonical categories.
+     - 🔗 **URL & Citation Integrity:** Strictly blocks local models from fabricating non-existent external URLs.
+     - ⚖️ **Confidence Calibration:** Automatically clamps overconfident scores when evidence is sparse or ambiguous.
+     - 🛠️ **JSON Repair:** Robust parsing of markdown-fenced or conversational local LLM output.
+   - **Optional Cloud Providers:** Seamless fallback to Google Gemini, OpenAI, or Anthropic Claude if configured.
 
 6. **Local Research History & Privacy by Design:**
    - Searchable local storage (`chrome.storage.local`).
    - Zero passive tracking or browsing history collection. Text captured strictly on explicit user action.
+   - Completely private and offline-capable when run with local models.
 
 ---
 
@@ -106,10 +114,14 @@ Open your terminal in the `contextlens` folder and run:
 
 *This will automatically create a Python virtual environment (`venv`), install dependencies, and start the FastAPI server at `http://localhost:8000`.*
 
-You can view the interactive Swagger API documentation at:
-**[http://localhost:8000/docs](http://localhost:8000/docs)**
+### Local AI Setup (No API Keys Needed):
+Run Qwen locally with [Ollama](https://ollama.com):
+```bash
+ollama run qwen2.5
+```
+By default, ContextLens connects directly to `http://localhost:11434` with model `qwen2.5:latest` (or configured `LOCAL_MODEL`), requiring zero API keys and offering 100% private, offline semantic reasoning with safety guardrails!
 
-*(Optional: If you want to use live LLMs, copy `backend/.env.example` to `backend/.env` and add your `GEMINI_API_KEY` or `OPENAI_API_KEY`. If left blank, the built-in context analysis engine runs automatically!)*
+*(Optional: Cloud providers like Google Gemini or OpenAI can still be configured in `backend/.env` if desired).*
 
 ---
 

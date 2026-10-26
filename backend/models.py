@@ -245,6 +245,16 @@ class CompareResponse(BaseModel):
         description="Which engine produced this result: llm, heuristic, or error"
     )
 
+    # Guardrails metadata
+    guardrails_applied: List[str] = Field(
+        default_factory=list,
+        description="List of security and safety guardrails evaluated and enforced"
+    )
+    guardrail_warnings: List[str] = Field(
+        default_factory=list,
+        description="Safety, grounding, or adversarial warnings raised by guardrails"
+    )
+
     @field_validator("classification", mode="before")
     @classmethod
     def validate_and_normalize_classification(cls, v: Any) -> str:

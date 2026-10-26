@@ -22,12 +22,21 @@ from typing import Any, Dict, Optional
 import httpx
 
 from .models import CompareResponse
+from .guardrails import (
+    repair_and_parse_json,
+    format_guarded_prompt,
+    apply_input_guardrails,
+    apply_output_guardrails,
+)
 
 logger = logging.getLogger("contextlens.llm_provider")
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
+
+DEFAULT_LOCAL_MODEL   = os.getenv("LOCAL_MODEL",   os.getenv("OLLAMA_MODEL", "qwen2.5:latest"))
+LOCAL_LLM_URL         = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST",  "http://localhost:11434")).rstrip("/")
 
 DEFAULT_GEMINI_MODEL  = os.getenv("GEMINI_MODEL",    "gemini-1.5-flash")
 DEFAULT_OPENAI_MODEL  = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
@@ -125,13 +134,19 @@ def _clean_json(raw: str) -> str:
     return s.strip()
 
 
-def _parse_llm_json(raw: str) -> CompareResponse:
-    """Parse raw LLM output to CompareResponse, with resilient field handling."""
-    cleaned = _clean_json(raw)
-    try:
-        data: Dict[str, Any] = json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        raise ValueError(f"LLM returned invalid JSON: {exc}\nRaw output: {raw[:500]}") from exc
+def _parse_llm_json(
+    raw: str,
+    passage_a: str = "",
+    passage_b: str = "",
+) -> CompareResponse:
+    """Parse raw LLM output to CompareResponse, with resilient field handling and guardrails."""
+    data = repair_and_parse_json(raw)
+    if not data:
+        cleaned = _clean_json(raw)
+        try:
+            data = json.loads(cleaned)
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"LLM returned invalid JSON: {exc}\nRaw output: {raw[:500]}") from exc
 
     # Map legacy field names that the model might output
     if "explanation" in data and "analysis_summary" not in data:
@@ -139,15 +154,22 @@ def _parse_llm_json(raw: str) -> CompareResponse:
     if "analysis_summary" in data and "explanation" not in data:
         data["explanation"] = data["analysis_summary"]
 
-    # Clamp confidence
-    if "confidence" in data:
-        try:
-            conf = float(data["confidence"])
-            data["confidence"] = max(0.0, min(1.0, conf))
-        except (TypeError, ValueError):
-            data["confidence"] = None
+    if passage_a or passage_b:
+        guarded_dict, applied, warnings = apply_output_guardrails(data, passage_a, passage_b)
+        guarded_dict["guardrails_applied"] = applied
+        guarded_dict["guardrail_warnings"] = warnings
+        data = guarded_dict
+    else:
+        # Clamp confidence
+        if "confidence" in data:
+            try:
+                conf = float(data["confidence"])
+                data["confidence"] = max(0.0, min(1.0, conf))
+            except (TypeError, ValueError):
+                data["confidence"] = None
 
-    data["engine"] = "llm"
+    if "engine" not in data:
+        data["engine"] = "llm"
 
     try:
         return CompareResponse(**data)
@@ -158,6 +180,119 @@ def _parse_llm_json(raw: str) -> CompareResponse:
 # ---------------------------------------------------------------------------
 # Provider implementations
 # ---------------------------------------------------------------------------
+
+async def call_local_model(
+    text_a: str,
+    title_a: str,
+    url_a: str,
+    text_b: str,
+    title_b: str,
+    url_b: str,
+    model: str = DEFAULT_LOCAL_MODEL,
+    base_url: str = LOCAL_LLM_URL,
+) -> CompareResponse:
+    """
+    Call a local LLM runner (Ollama, LM Studio, vLLM, llama.cpp) running local models like Qwen.
+    Requires NO API keys. Enforces strict input and output guardrails.
+    """
+    # Guardrail 1: Input boundary isolation & prompt injection sanitization
+    clean_a, clean_b, guarded_prompt, input_applied, input_warnings = apply_input_guardrails(
+        claim_a_text=text_a,
+        claim_a_title=title_a,
+        claim_b_text=text_b,
+        claim_b_title=title_b,
+        max_chars=MAX_INPUT_CHARS,
+    )
+
+    url_norm = base_url.rstrip("/")
+    raw_text: Optional[str] = None
+    last_error: Optional[Exception] = None
+
+    async with httpx.AsyncClient(timeout=LLM_TIMEOUT) as client:
+        # Strategy A: Native Ollama /api/chat endpoint
+        if not url_norm.endswith("/v1"):
+            ollama_endpoint = f"{url_norm}/api/chat"
+            ollama_payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": guarded_prompt},
+                ],
+                "format": "json",
+                "stream": False,
+                "options": {
+                    "temperature": 0.1,
+                },
+            }
+            try:
+                res = await client.post(ollama_endpoint, json=ollama_payload)
+                if res.status_code == 200:
+                    data = res.json()
+                    raw_text = data.get("message", {}).get("content", "")
+                elif res.status_code != 404:
+                    res.raise_for_status()
+            except (httpx.ConnectError, httpx.TimeoutException) as exc:
+                raise exc
+            except Exception as exc:
+                last_error = exc
+                logger.debug("Ollama /api/chat failed: %s; trying /v1/chat/completions...", exc)
+
+        # Strategy B: OpenAI-compatible endpoint (LM Studio, vLLM, Ollama /v1)
+        if raw_text is None:
+            endpoint = (
+                f"{url_norm}/chat/completions"
+                if url_norm.endswith("/v1")
+                else f"{url_norm}/v1/chat/completions"
+            )
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": guarded_prompt},
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.1,
+            }
+            try:
+                res = await client.post(endpoint, json=payload)
+                res.raise_for_status()
+                data = res.json()
+                raw_text = data["choices"][0]["message"]["content"]
+            except Exception as exc:
+                if last_error:
+                    raise ValueError(f"Local model call failed on both Ollama and /v1 endpoints: {exc}") from exc
+                raise exc
+
+    if not raw_text:
+        raise ValueError(f"No response text received from local model at {base_url}")
+
+    # Guardrail 2: JSON Repair & parsing
+    parsed = repair_and_parse_json(raw_text)
+    if not parsed:
+        raise ValueError(f"Local model returned invalid JSON:\n{raw_text[:500]}")
+
+    if "explanation" in parsed and "analysis_summary" not in parsed:
+        parsed["analysis_summary"] = parsed["explanation"]
+    if "analysis_summary" in parsed and "explanation" not in parsed:
+        parsed["explanation"] = parsed["analysis_summary"]
+
+    # Guardrail 3: Output Guardrails (Taxonomy, Grounding, Anti-Hallucination, Confidence Calibration)
+    guarded_dict, output_applied, output_warnings = apply_output_guardrails(
+        data=parsed,
+        passage_a=clean_a,
+        passage_b=clean_b,
+    )
+
+    guarded_dict["engine"] = f"local-qwen ({model})"
+    guarded_dict["evidence_a"] = text_a
+    guarded_dict["evidence_b"] = text_b
+    guarded_dict["guardrails_applied"] = list(dict.fromkeys(input_applied + output_applied))
+    guarded_dict["guardrail_warnings"] = list(dict.fromkeys(input_warnings + output_warnings))
+
+    return CompareResponse(**guarded_dict)
+
+
+call_qwen_local = call_local_model
 
 async def call_gemini(
     text_a: str, title_a: str, url_a: str,
@@ -290,14 +425,15 @@ async def evaluate_source_relevance(
     claim_text: str,
     source_title: str,
     source_snippet: str,
-    api_key: str,
-    provider: str,
+    api_key: str = "",
+    provider: str = "local",
     model: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Use the configured LLM to assess whether a source snippet is relevant
-    to a claim. Returns a dict with relationship_to_claim, relevance_reason,
-    and limitations.
+    Use the configured LLM (local Qwen or cloud provider) to assess whether a
+    source snippet is relevant to a claim. Returns a dict with relationship_to_claim,
+    relevance_reason, and limitations.
+    Requires NO API keys when using local models.
     """
     user_msg = (
         f'CLAIM: """{claim_text[:1000]}"""\n\n'
@@ -309,7 +445,50 @@ async def evaluate_source_relevance(
     raw: Optional[str] = None
 
     try:
-        if provider == "gemini":
+        if provider in ("local", "qwen"):
+            url_norm = LOCAL_LLM_URL.rstrip("/")
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                if not url_norm.endswith("/v1"):
+                    try:
+                        res = await client.post(
+                            f"{url_norm}/api/chat",
+                            json={
+                                "model": model or DEFAULT_LOCAL_MODEL,
+                                "messages": [
+                                    {"role": "system", "content": SOURCE_EVAL_SYSTEM},
+                                    {"role": "user", "content": user_msg},
+                                ],
+                                "format": "json",
+                                "stream": False,
+                                "options": {"temperature": 0.0},
+                            },
+                        )
+                        if res.status_code == 200:
+                            raw = res.json().get("message", {}).get("content", "")
+                    except Exception:
+                        pass
+                if not raw:
+                    endpoint = (
+                        f"{url_norm}/chat/completions"
+                        if url_norm.endswith("/v1")
+                        else f"{url_norm}/v1/chat/completions"
+                    )
+                    res = await client.post(
+                        endpoint,
+                        json={
+                            "model": model or DEFAULT_LOCAL_MODEL,
+                            "temperature": 0.0,
+                            "response_format": {"type": "json_object"},
+                            "messages": [
+                                {"role": "system", "content": SOURCE_EVAL_SYSTEM},
+                                {"role": "user", "content": user_msg},
+                            ],
+                        },
+                    )
+                    if res.status_code == 200:
+                        raw = res.json()["choices"][0]["message"]["content"]
+
+        elif provider == "gemini":
             full = SOURCE_EVAL_SYSTEM + "\n\n" + user_msg
             endpoint = (
                 f"https://generativelanguage.googleapis.com/v1beta/models/"

@@ -27,7 +27,8 @@ import re
 from typing import List, Optional, Tuple
 
 from .models import ClaimItem, CompareResponse, AdditionalSource
-from .llm_provider import call_gemini, call_openai, call_anthropic
+from .llm_provider import call_gemini, call_openai, call_anthropic, call_local_model, call_qwen_local
+from .guardrails import apply_input_guardrails, apply_output_guardrails, apply_url_guardrail
 from .source_search import discover_sources
 from .source_evaluator import evaluate_sources
 
@@ -48,8 +49,8 @@ def _get_llm_config(
     api_key_override: Optional[str] = None
 ) -> Tuple[Optional[str], Optional[str]]:
     """
-    Return (provider_name, api_key) for the first available LLM provider.
-    Checks env vars; allows override from request header (backend-to-LLM only).
+    Return (provider_name, api_key) for the active LLM provider.
+    Defaults to local model (Qwen via Ollama/Local LLM) requiring NO API keys.
     """
     gemini_key    = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     openai_key    = os.getenv("OPENAI_API_KEY")
@@ -65,12 +66,24 @@ def _get_llm_config(
         else:
             return "gemini", key
 
+    llm_provider = os.getenv("LLM_PROVIDER", "").lower().strip()
+    use_local    = os.getenv("USE_LOCAL_MODEL", "true").lower().strip() not in ("false", "0", "no")
+
+    # Explicit heuristic requested
+    if llm_provider == "heuristic":
+        return None, None
+
+    # If cloud keys are provided/patched in environment, use them
     if gemini_key:
         return "gemini", gemini_key
     if openai_key:
         return "openai", openai_key
     if anthropic_key:
         return "anthropic", anthropic_key
+
+    # Default: Use local model (Qwen via Ollama) without requiring any API keys
+    if use_local or llm_provider in ("local", "qwen", "ollama"):
+        return "local", None
 
     return None, None
 
@@ -368,21 +381,26 @@ async def analyze_passages(
     analysis: Optional[CompareResponse] = None
     search_error: Optional[str] = None
 
-    if provider and api_key:
+    if provider:
         try:
-            if provider == "gemini":
+            if provider in ("local", "qwen"):
+                analysis = await call_local_model(
+                    claim_a.text, claim_a.title or "", claim_a.url or "",
+                    claim_b.text, claim_b.title or "", claim_b.url or "",
+                )
+            elif provider == "gemini" and api_key:
                 analysis = await call_gemini(
                     claim_a.text, claim_a.title or "", claim_a.url or "",
                     claim_b.text, claim_b.title or "", claim_b.url or "",
                     api_key,
                 )
-            elif provider == "openai":
+            elif provider == "openai" and api_key:
                 analysis = await call_openai(
                     claim_a.text, claim_a.title or "", claim_a.url or "",
                     claim_b.text, claim_b.title or "", claim_b.url or "",
                     api_key,
                 )
-            elif provider == "anthropic":
+            elif provider == "anthropic" and api_key:
                 analysis = await call_anthropic(
                     claim_a.text, claim_a.title or "", claim_a.url or "",
                     claim_b.text, claim_b.title or "", claim_b.url or "",
@@ -390,7 +408,8 @@ async def analyze_passages(
                 )
 
             if analysis:
-                analysis.engine = "llm"
+                if not analysis.engine:
+                    analysis.engine = f"llm ({provider})"
                 # Back-fill legacy fields if the model omitted them
                 if not analysis.evidence_a:
                     object.__setattr__(analysis, "evidence_a", claim_a.text)
@@ -402,10 +421,16 @@ async def analyze_passages(
             analysis = None
 
     if analysis is None:
-        if provider and api_key:
-            # LLM was configured but call failed
-            logger.warning("LLM call failed; using heuristic with warning in response")
+        if provider:
+            logger.warning("LLM call failed (%s); using heuristic with warning in response", provider)
         analysis = _run_heuristic_analysis(claim_a, claim_b)
+        # Apply input guardrails to record any adversarial prompt injections
+        _, _, _, applied, warnings = apply_input_guardrails(
+            claim_a.text, claim_a.title or "",
+            claim_b.text, claim_b.title or "",
+        )
+        analysis.guardrails_applied = list(dict.fromkeys(analysis.guardrails_applied + applied))
+        analysis.guardrail_warnings = list(dict.fromkeys(analysis.guardrail_warnings + warnings))
 
     # Build source references from the supplied passages
     source_refs: List[str] = []
@@ -448,6 +473,11 @@ async def analyze_passages(
         except Exception as exc:
             logger.warning("Source discovery pipeline failed: %s", exc)
             search_error = f"Source discovery encountered an error: {exc}"
+
+    if additional_sources:
+        verified_urls = {claim_a.url, claim_b.url} | {s.url for s in additional_sources if s.url}
+        safe_dicts = apply_url_guardrail([s.model_dump() for s in additional_sources], verified_urls)
+        additional_sources = [AdditionalSource(**d) for d in safe_dicts]
 
     analysis.additional_sources = additional_sources
 

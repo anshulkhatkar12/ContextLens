@@ -70,14 +70,30 @@ def health_check():
     has_serpapi   = bool(os.getenv("SERPAPI_KEY"))
     has_brave     = bool(os.getenv("BRAVE_SEARCH_KEY"))
 
-    if has_gemini:
+    use_local     = os.getenv("USE_LOCAL_MODEL", "true").lower().strip() not in ("false", "0", "no")
+    llm_provider  = os.getenv("LLM_PROVIDER", "").lower().strip()
+    local_model   = os.getenv("LOCAL_MODEL", os.getenv("OLLAMA_MODEL", "qwen2.5:latest"))
+    local_url     = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434"))
+
+    # Determine active engine name
+    if llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_openai or has_anthropic)):
+        engine_name = f"Local Qwen ({local_model}) [No API Key Required]"
+        llm_active = True
+    elif has_gemini:
         engine_name = "Google Gemini (AI)"
+        llm_active = True
     elif has_openai:
         engine_name = "OpenAI GPT (AI)"
+        llm_active = True
     elif has_anthropic:
         engine_name = "Anthropic Claude (AI)"
+        llm_active = True
+    elif use_local:
+        engine_name = f"Local Qwen ({local_model}) [No API Key Required]"
+        llm_active = True
     else:
         engine_name = "Heuristic Fallback (no LLM configured)"
+        llm_active = False
 
     if has_serpapi:
         search_name = "SerpAPI"
@@ -91,7 +107,18 @@ def health_check():
         "service": "ContextLens Backend",
         "api_version": "2.0.0",
         "engine": engine_name,
-        "llm_configured": has_gemini or has_openai or has_anthropic,
+        "llm_configured": llm_active,
+        "local_model": local_model,
+        "local_endpoint": local_url,
+        "guardrails_enabled": True,
+        "guardrails": [
+            "Prompt Injection Defense & Boundary Isolation",
+            "Anti-Hallucination & Passage Grounding Verification",
+            "Canonical Taxonomy Enforcement",
+            "URL & Citation Integrity",
+            "Confidence Calibration",
+            "JSON Output Repair"
+        ],
         "search_engine": search_name,
         "search_configured": has_serpapi or has_brave,
     }

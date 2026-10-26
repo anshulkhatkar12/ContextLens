@@ -26,7 +26,10 @@ logger = logging.getLogger("contextlens.source_evaluator")
 # ---------------------------------------------------------------------------
 
 def _detect_provider_and_key() -> tuple[Optional[str], Optional[str]]:
-    """Return (provider_name, api_key) for the first configured LLM, or (None, None)."""
+    """Return (provider_name, api_key) for the active LLM. Local models require NO api_key."""
+    use_local = os.getenv("USE_LOCAL_MODEL", "true").lower() not in ("false", "0", "no")
+    llm_provider = os.getenv("LLM_PROVIDER", "").lower()
+
     gemini_key    = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     openai_key    = os.getenv("OPENAI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
@@ -37,6 +40,11 @@ def _detect_provider_and_key() -> tuple[Optional[str], Optional[str]]:
         return "openai", openai_key
     if anthropic_key:
         return "anthropic", anthropic_key
+
+    # Default to local model (Qwen / Ollama) without needing API keys
+    if use_local or llm_provider in ("local", "qwen", "ollama"):
+        return "local", ""
+
     return None, None
 
 
@@ -110,13 +118,13 @@ async def evaluate_sources(
             continue
 
         # Evaluate relevance
-        if provider and api_key and snippet:
+        if provider and (api_key or provider in ("local", "qwen")) and snippet:
             try:
                 eval_result = await evaluate_source_relevance(
                     claim_text=claim_text,
                     source_title=title,
                     source_snippet=snippet,
-                    api_key=api_key,
+                    api_key=api_key or "",
                     provider=provider,
                 )
             except Exception as exc:
