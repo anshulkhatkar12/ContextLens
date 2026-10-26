@@ -38,7 +38,7 @@ logger = logging.getLogger("contextlens.llm_provider")
 DEFAULT_LOCAL_MODEL   = os.getenv("LOCAL_MODEL",   os.getenv("OLLAMA_MODEL", "qwen2.5:latest"))
 LOCAL_LLM_URL         = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST",  "http://localhost:11434")).rstrip("/")
 
-DEFAULT_GEMINI_MODEL  = os.getenv("GEMINI_MODEL",    "gemini-1.5-flash")
+DEFAULT_GEMINI_MODEL  = os.getenv("GEMINI_MODEL",    "gemini-3.8-flash")
 DEFAULT_OPENAI_MODEL  = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
 DEFAULT_ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307")
 
