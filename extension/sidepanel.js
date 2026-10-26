@@ -412,8 +412,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Save History Indicator
     if (btnSaveHistory) {
       btnSaveHistory.addEventListener("click", () => {
-        btnSaveHistory.textContent = "Saved ✓";
-        setTimeout(() => (btnSaveHistory.textContent = "💾 Saved"), 2000);
+        btnSaveHistory.textContent = "Saved";
+        setTimeout(() => (btnSaveHistory.textContent = "Save"), 2000);
       });
     }
 
@@ -730,7 +730,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       btnCompare.disabled = false;
       compareSpinner.classList.add("hidden");
-      compareBtnText.textContent = "⚡ Compare with ContextLens";
+      compareBtnText.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Compare with ContextLens`;
     }
   }
 
@@ -764,12 +764,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const BADGE_CONFIG = {
-    supported:    { cls: "badge-consistent",    icon: "✅", label: "SUPPORTED",           sub: "The evidence directly supports the claim." },
-    contradicted: { cls: "badge-contradiction", icon: "⚠️", label: "CONTRADICTED",         sub: "Reliable evidence conflicts with the claim under comparable conditions." },
-    partially:    { cls: "badge-partial",       icon: "🔶", label: "PARTIALLY SUPPORTED",  sub: "Some aspects are supported, but the full claim is not established." },
-    context:      { cls: "badge-context",       icon: "⏱️", label: "DIFFERENT CONTEXT",     sub: "Passages differ due to dates, scope, definitions, or conditions." },
-    insufficient: { cls: "badge-insufficient",  icon: "❓", label: "INSUFFICIENT EVIDENCE", sub: "The available evidence does not justify a conclusion." },
-    unrelated:    { cls: "badge-unrelated",     icon: "🔗", label: "UNRELATED",            sub: "The evidence does not meaningfully address the claim." },
+    supported:    { cls: "badge-consistent",    iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`, label: "SUPPORTED",           sub: "The evidence directly supports the claim." },
+    contradicted: { cls: "badge-contradiction", iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: "CONTRADICTED",         sub: "Reliable evidence conflicts with the claim under comparable conditions." },
+    partially:    { cls: "badge-partial",       iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`, label: "PARTIALLY SUPPORTED",  sub: "Some aspects are supported, but the full claim is not established." },
+    context:      { cls: "badge-context",       iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`, label: "DIFFERENT CONTEXT",     sub: "Passages differ due to dates, scope, definitions, or conditions." },
+    insufficient: { cls: "badge-insufficient",  iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: "INSUFFICIENT EVIDENCE", sub: "The available evidence does not justify a conclusion." },
+    unrelated:    { cls: "badge-unrelated",     iconSvg: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>`, label: "UNRELATED",            sub: "The evidence does not meaningfully address the claim." },
   };
 
   function renderAnalysisResult(result) {
@@ -779,7 +779,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const cls = normalizeClassification(result.classification);
     const cfg = BADGE_CONFIG[cls] || BADGE_CONFIG.insufficient;
     classificationBadge.className = "classification-badge " + cfg.cls;
-    badgeIcon.textContent  = cfg.icon;
+    badgeIcon.innerHTML    = cfg.iconSvg;
     badgeLabel.textContent = cfg.label;
     badgeSub.textContent   = cfg.sub;
 
@@ -800,11 +800,11 @@ document.addEventListener("DOMContentLoaded", () => {
       );
 
       if (isHeuristic) {
-        engineBadge.textContent = "⚙️ Offline Heuristic";
+        engineBadge.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Heuristic`;
         engineBadge.className = "engine-badge engine-heuristic";
         engineBadge.classList.remove("hidden");
       } else if (isAI) {
-        let label = "🤖 AI";
+        let label = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg> AI`;
         const engStr = String(result.engine || "").toLowerCase();
         if (engStr.includes("groq")) {
           label = "⚡ Groq";
@@ -817,7 +817,7 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (engStr.includes("local") || engStr.includes("qwen")) {
           label = "🤖 Local Qwen";
         }
-        engineBadge.textContent = label;
+        engineBadge.innerHTML = label;
         engineBadge.className = "engine-badge engine-llm";
         engineBadge.classList.remove("hidden");
       } else {
@@ -992,7 +992,7 @@ document.addEventListener("DOMContentLoaded", () => {
           a.target = "_blank";
           const domain = formatUrlDomain(src.url);
           const typeBadge = src.content_type === "full_page" ? " [Full Page]" : " [Snippet]";
-          a.innerHTML = `<span>🌐 Source ${idx + 1}: ${escapeHtml(src.title || domain)}${typeBadge}</span><span class="source-domain">${domain}</span>`;
+          a.innerHTML = `<span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:text-bottom; margin-right:4px;"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>Source ${idx + 1}: ${escapeHtml(src.title || domain)}${typeBadge}</span><span class="source-domain">${domain}</span>`;
           sourceLinksGrid.appendChild(a);
         }
       });
@@ -1008,10 +1008,10 @@ document.addEventListener("DOMContentLoaded", () => {
     additionalSourcesList.innerHTML = "";
 
     const relConfig = {
-      supports:       { cls: "rel-supports",     icon: "✅", label: "Supports" },
-      contradicts:    { cls: "rel-contradicts",  icon: "⚠️", label: "Contradicts" },
-      contextualizes: { cls: "rel-context",      icon: "ℹ️", label: "Contextualizes" },
-      unclear:        { cls: "rel-unclear",      icon: "❓", label: "Unclear" },
+      supports:       { cls: "rel-supports",     iconSvg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`, label: "Supports" },
+      contradicts:    { cls: "rel-contradicts",  iconSvg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: "Contradicts" },
+      contextualizes: { cls: "rel-context",      iconSvg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`, label: "Contextualizes" },
+      unclear:        { cls: "rel-unclear",      iconSvg: `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`, label: "Unclear" },
     };
 
     extraSources.forEach((src) => {
@@ -1033,7 +1033,7 @@ document.addEventListener("DOMContentLoaded", () => {
       card.className = "additional-source-item";
       card.innerHTML = `
         <div class="source-item-header">
-          <span class="source-rel-badge ${rel.cls}">${rel.icon} ${rel.label}</span>
+          <span class="source-rel-badge ${rel.cls}">${rel.iconSvg} ${rel.label}</span>
           <span class="source-retrieval-label">${escapeHtml(statusLabel)}</span>
         </div>
         <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="source-item-title">
@@ -1042,7 +1042,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ${src.publisher ? `<div class="source-item-publisher">${escapeHtml(src.publisher)}${src.published_date ? " · " + escapeHtml(src.published_date) : ""}</div>` : ""}
         ${src.relevance_reason || src.verified_claim ? `<div class="source-item-relevance">${escapeHtml(src.relevance_reason || src.verified_claim || "")}</div>` : ""}
         ${src.supporting_excerpt || src.snippet ? `<blockquote class="source-item-excerpt">${escapeHtml((src.supporting_excerpt || src.snippet || "").substring(0, 250))}${src.supporting_excerpt && src.supporting_excerpt.length > 250 ? "…" : ""}</blockquote>` : ""}
-        ${src.limitations ? `<div class="source-item-limitations">⚠ ${escapeHtml(src.limitations)}</div>` : ""}
+        ${src.limitations ? `<div class="source-item-limitations"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline-block; vertical-align:text-bottom; margin-right:3px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${escapeHtml(src.limitations)}</div>` : ""}
       `;
       additionalSourcesList.appendChild(card);
     });
@@ -1706,8 +1706,10 @@ ${limitationsMd ? `**Analysis Limitations:**\n${limitationsMd}\n` : ""}
     if (!md) return;
 
     navigator.clipboard.writeText(md).then(() => {
-      btnCopyReport.textContent = "Copied ✓";
-      setTimeout(() => (btnCopyReport.textContent = "📋 Copy"), 2000);
+      btnCopyReport.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied`;
+      setTimeout(() => {
+        btnCopyReport.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/></svg> Copy`;
+      }, 2000);
     });
   }
 
@@ -1725,17 +1727,26 @@ ${limitationsMd ? `**Analysis Limitations:**\n${limitationsMd}\n` : ""}
     const T = window.ContextLensThemes;
     const app = state.appearanceState || T.APPEARANCE_DEFAULTS;
 
-    // Render Quick Theme Chips
+    // Render Quick Theme Chips: Lavender default + 5 curated dark themes
     if (quickThemeChips) {
       quickThemeChips.innerHTML = "";
-      const allThemes = [...T.BUILTIN_THEMES, ...(app.customThemes || [])];
-      allThemes.forEach((t) => {
+      T.BUILTIN_THEMES.forEach((t) => {
+        const isActive = t.id === app.activeThemeId;
         const chip = document.createElement("button");
-        chip.className = `quick-theme-chip ${t.id === app.activeThemeId ? "active" : ""}`;
-        chip.title = `${t.name} (${t.category || "theme"})`;
+        chip.className = `quick-theme-chip ${isActive ? "active" : ""}`;
+        chip.title = `${t.name} (${t.category === "light" ? "Default Light" : "Curated Dark"})`;
+        chip.setAttribute("role", "radio");
+        chip.setAttribute("aria-checked", isActive ? "true" : "false");
+        const swatchBg = t.image
+          ? `background-image: url('assets/themes/${t.image}'); background-size: cover; background-position: center; border: 1.5px solid ${t.tokens['--border-strong'] || 'rgba(255,255,255,0.3)'}`
+          : `background: ${t.accentColor || t.tokens['--accent-violet']}; border: 1.5px solid ${t.tokens['--border-strong'] || 'rgba(255,255,255,0.3)'}`;
+
         chip.innerHTML = `
-          <span class="chip-color-swatch" style="background: ${t.tokens['--bg-surface'] || '#111827'}; border: 2px solid ${t.tokens['--accent-violet'] || '#8b5cf6'}"></span>
-          <span class="chip-name">${t.emoji || "🎨"} ${escapeHtml(t.name)}</span>
+          <span class="chip-color-swatch" style="${swatchBg}"></span>
+          <span class="chip-name">${escapeHtml(t.name)}</span>
+          <span class="chip-check" aria-hidden="true">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
         `;
         chip.addEventListener("click", () => {
           app.activeThemeId = t.id;
@@ -1747,45 +1758,8 @@ ${limitationsMd ? `**Analysis Limitations:**\n${limitationsMd}\n` : ""}
       });
     }
 
-    // Render Quick Workflow Presets
-    if (quickPresetChips) {
-      quickPresetChips.innerHTML = "";
-      T.PERSONALIZATION_PRESETS.forEach((p) => {
-        const btn = document.createElement("button");
-        btn.className = "quick-preset-chip";
-        btn.title = p.description;
-        btn.innerHTML = `<span class="preset-emoji">${p.emoji}</span> <span class="preset-name">${escapeHtml(p.name)}</span>`;
-        btn.addEventListener("click", () => {
-          app.activeThemeId = p.themeId;
-          app.typography = { ...p.typography };
-          app.density = p.density;
-          app.radiusPreset = p.radiusPreset;
-          app.reducedMotion = p.reducedMotion;
-          app.borderStrength = p.borderStrength;
-          T.applyFullAppearance(app);
-          T.saveAppearance(app);
-          renderQuickAppearanceControls();
-        });
-        quickPresetChips.appendChild(btn);
-      });
-    }
-
-    // Sync segmented controls & toggles
-    if (quickDensityControl) {
-      quickDensityControl.querySelectorAll(".seg-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.density === app.density);
-      });
-    }
-    if (quickRadiusControl) {
-      quickRadiusControl.querySelectorAll(".seg-btn").forEach((b) => {
-        b.classList.toggle("active", b.dataset.radius === app.radiusPreset);
-      });
-    }
     if (quickReducedMotion) {
       quickReducedMotion.checked = !!app.reducedMotion;
-    }
-    if (quickStrongBorders) {
-      quickStrongBorders.checked = app.borderStrength === "strong";
     }
   }
 });
