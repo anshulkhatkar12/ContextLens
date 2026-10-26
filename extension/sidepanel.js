@@ -680,13 +680,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const tA = (claimA.text || "").toLowerCase();
     const tB = (claimB.text || "").toLowerCase();
 
+    function cleanSourceLabel(claim, defaultLabel) {
+      if (claim.title && claim.title.trim() && !["Manual Input", "Untitled Source", "Untitled Webpage"].includes(claim.title.trim())) {
+        return `${defaultLabel} (${claim.title})`;
+      }
+      return defaultLabel;
+    }
+
+    const labelA = cleanSourceLabel(claimA, "Source A");
+    const labelB = cleanSourceLabel(claimB, "Source B");
+
     // Scenario 1: Date/Schedule contradiction check
     const days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
     const foundDaysA = days.filter((d) => tA.includes(d));
     const foundDaysB = days.filter((d) => tB.includes(d));
-
-    const numbersA = (tA.match(/\b\d+(\.\d+)?%?\b/g) || []);
-    const numbersB = (tB.match(/\b\d+(\.\d+)?%?\b/g) || []);
 
     const hasContradictoryDays =
       foundDaysA.length > 0 &&
@@ -696,6 +703,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Context differences (tax, shipping, checkout, base, discount)
     const contextKeywords = ["shipping", "tax", "taxes", "checkout", "handling", "fees", "order", "msrp", "base", "extended", "update"];
     const hasContextMod = contextKeywords.some((w) => tA.includes(w) || tB.includes(w));
+    const hasNumbers = Boolean(tA.match(/\$?\d+/)) && Boolean(tB.match(/\$?\d+/));
 
     // Ambiguous statistics check
     const hasUnemploymentOrStat =
@@ -710,9 +718,9 @@ document.addEventListener("DOMContentLoaded", () => {
         classification: "possible_contradiction",
         explanation: `Passage A refers to ${foundDaysA.join(", ")} while Passage B specifies ${foundDaysB.join(", ")}. Unless the event occurs over multiple days or the schedule was formally rescheduled, these statements present mutually exclusive dates.`,
         key_differences: [
-          `Passage A specifies date/day: ${foundDaysA.join(", ")}`,
-          `Passage B specifies date/day: ${foundDaysB.join(", ")}`,
-          "Both passages refer to the same event or keynote under the same title."
+          `${labelA} specifies schedule: ${foundDaysA.join(", ")}`,
+          `${labelB} specifies schedule: ${foundDaysB.join(", ")}`,
+          "Both passages appear to discuss the identical keynote or event."
         ],
         missing_context: [
           "Check whether the event spans multiple days (e.g. Nov 14-15).",
@@ -743,13 +751,13 @@ document.addEventListener("DOMContentLoaded", () => {
         evidence_a: claimA.text,
         evidence_b: claimB.text
       };
-    } else if (hasContextMod) {
+    } else if (hasContextMod && hasNumbers) {
       return {
         classification: "different_context",
         explanation: "The figures in both passages likely describe different stages or scopes of pricing (e.g., base retail price vs. total final checkout price including shipping and taxes).",
         key_differences: [
-          "Passage A cites a starting or baseline figure.",
-          "Passage B reflects a total checkout or fulfilled invoice.",
+          `${labelA} cites a starting or baseline figure.`,
+          `${labelB} reflects a total checkout or fulfilled invoice.`,
           "Ancillary costs (shipping, handling, local taxes) account for the difference."
         ],
         missing_context: [
@@ -769,8 +777,8 @@ document.addEventListener("DOMContentLoaded", () => {
         classification: "insufficient_context",
         explanation: "Both passages discuss youth employment trends, but neither specifies the country, survey year, age bracket (e.g., 15-24 vs. 18-29), or seasonal adjustment methodology.",
         key_differences: [
-          "Passage A reports an increase or rising trend in the metric.",
-          "Passage B reports a historic low or decreasing rate.",
+          `${labelA} reports an increase or rising trend in the metric.`,
+          `${labelB} reports a historic low or decreasing rate.`,
           "Neither source names the geographical jurisdiction or survey timeframe."
         ],
         missing_context: [
@@ -788,14 +796,96 @@ document.addEventListener("DOMContentLoaded", () => {
       };
     }
 
-    // Default intelligent comparison for arbitrary user input
+    // Semantic tokens & numbers comparison
+    const stopwords = new Set([
+      "the", "is", "are", "was", "were", "be", "been", "being", "from", "to", "at", "in", "on", "by",
+      "for", "with", "about", "against", "between", "into", "through", "during", "before", "after",
+      "above", "below", "up", "down", "out", "off", "over", "under", "again", "further", "then", "once",
+      "here", "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more",
+      "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than",
+      "too", "very", "can", "will", "just", "should", "now", "a", "an", "and", "or",
+      "as", "of", "that", "this", "these", "those", "it", "its", "lists", "stated", "states", "notes",
+      "according", "information", "reported", "reports"
+    ]);
+
+    function normalizeToken(w) {
+      w = w.toLowerCase().replace(/^[^\w]+|[^\w]+$/g, "");
+      if (w.endsWith("days")) return w.slice(0, -1);
+      if (w.endsWith("ing")) return w.slice(0, -3);
+      if (w.endsWith("ed")) return w.slice(0, -2);
+      if (w.endsWith("es")) return w.slice(0, -2);
+      if (w.endsWith("s") && !w.endsWith("ss")) return w.slice(0, -1);
+      return w;
+    }
+
+    const rawA = (tA.match(/[a-zA-Z0-9]+/g) || []).map(normalizeToken);
+    const rawB = (tB.match(/[a-zA-Z0-9]+/g) || []).map(normalizeToken);
+
+    const tokensA = new Set(rawA.filter((w) => !stopwords.has(w) && w.length > 1));
+    const tokensB = new Set(rawB.filter((w) => !stopwords.has(w) && w.length > 1));
+
+    const numsA = (tA.match(/\b\d+(\.\d+)?\b/g) || []);
+    const numsB = (tB.match(/\b\d+(\.\d+)?\b/g) || []);
+    const setNumsA = new Set(numsA);
+    const setNumsB = new Set(numsB);
+
+    const overlap = [...tokensA].filter((x) => tokensB.has(x));
+    const minTokens = Math.min(tokensA.size, tokensB.size);
+    const overlapRatio = minTokens > 0 ? overlap.length / minTokens : 0;
+
+    // Check 1: Conflicting numbers for the same subject
+    const numsMatch = setNumsA.size === setNumsB.size && [...setNumsA].every((n) => setNumsB.has(n));
+    if (overlap.length >= 2 && setNumsA.size > 0 && setNumsB.size > 0 && !numsMatch && !hasContextMod) {
+      return {
+        classification: "possible_contradiction",
+        explanation: `Both passages discuss the same topic (${overlap.slice(0, 3).join(", ")}), but state conflicting hours or figures: ${labelA} states '${[...setNumsA].join(", ")}' while ${labelB} states '${[...setNumsB].join(", ")}'.`,
+        key_differences: [
+          `${labelA} cites numbers/hours: ${[...setNumsA].join(", ")}`,
+          `${labelB} cites numbers/hours: ${[...setNumsB].join(", ")}`,
+          "The statements appear to describe incompatible terms for the same subject."
+        ],
+        missing_context: [
+          "Verify whether seasonal or weekend adjustments apply.",
+          "Check for recent policy changes or revisions."
+        ],
+        verification_questions: [
+          "Which source reflects the official current schedule or figure?",
+          "Has an updated timetable been released?"
+        ],
+        evidence_a: claimA.text,
+        evidence_b: claimB.text
+      };
+    }
+
+    // Check 2: Consistent statement check (matching numbers or matching facts with high token overlap)
+    if ((overlapRatio >= 0.5 || overlap.length >= 3) && (numsMatch || (setNumsA.size === 0 && setNumsB.size === 0))) {
+      const keyTopics = overlap.slice(0, 4).join(", ");
+      return {
+        classification: "consistent",
+        explanation: `Both passages corroborate that the ${keyTopics} details align. The statements share matching factual terms and schedule parameters without conflict.`,
+        key_differences: [
+          "No substantive factual discrepancies detected; both passages agree on core details."
+        ],
+        missing_context: [
+          "Check for any special holiday exceptions or additional operational rules."
+        ],
+        verification_questions: [
+          "Do both sources draw from the same primary publication?",
+          "Are there any secondary conditions not captured in these excerpts?"
+        ],
+        evidence_a: claimA.text,
+        evidence_b: claimB.text
+      };
+    }
+
+    // Default balanced context comparison
     return {
       classification: "different_context",
-      explanation: "Both passages discuss related subjects, but subtle variations in perspective, timing, or scope suggest they describe different facets rather than direct contradictions.",
+      explanation: "Both passages discuss related subjects, but variations in emphasis, perspective, or timing suggest they describe different facets rather than direct contradictions.",
       key_differences: [
-        "Passage A focuses on the initial premise and conditions.",
-        "Passage B emphasizes subsequent developments or external factors.",
-        `Numeric or descriptive emphasis differs: Source A highlights "${claimA.title}", Source B highlights "${claimB.title}".`
+        `${labelA} states: "${claimA.text.substring(0, 70)}..."`,
+        `${labelB} states: "${claimB.text.substring(0, 70)}..."`,
+        "Differences in terminology reflect divergent focus rather than mutual incompatibility."
       ],
       missing_context: [
         "Timestamps and author credentials of both publications.",

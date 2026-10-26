@@ -96,6 +96,28 @@ def test_compare_consistent():
     assert len(data["key_differences"]) > 0
     assert len(data["verification_questions"]) > 0
 
+def test_compare_museum_weekday_hours():
+    payload = {
+        "claim_a": {
+            "text": "THE MUSEUM IS OPEN FROM 9 TO 5 ON WEEKDAYS",
+            "title": "Manual Input",
+            "url": ""
+        },
+        "claim_b": {
+            "text": "VISITOR INFORMATION LISTS THE MUSEUM WEEKDAY OPENING FROM 9 TO 5",
+            "title": "Manual Input",
+            "url": ""
+        }
+    }
+    response = client.post("/compare", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["classification"] == "consistent"
+    assert "museum" in data["explanation"].lower()
+    # Confirm no robotic 'Manual Input' text leaked into key differences
+    for diff in data["key_differences"]:
+        assert "context from: Manual Input" not in diff
+
 def test_empty_text_validation():
     payload = {
         "claim_a": {"text": "   ", "title": "Source A", "url": ""},
