@@ -6,7 +6,7 @@
   <title>ContextLens</title>
   <link rel="stylesheet" href="sidepanel.css">
   <style>
-    /* Specific overrides for popup view */
+    /* Popup specific dimension constraints */
     body {
       width: 440px;
       min-height: 560px;
@@ -43,7 +43,7 @@
       </div>
 
       <div class="header-actions">
-        <button id="btn-open-tab" class="icon-btn" title="Open full dashboard tab">
+        <button id="btn-open-tab" class="icon-btn" title="Open full research dashboard">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
             <polyline points="15 3 21 3 21 9"></polyline>
@@ -74,6 +74,7 @@
 
     <!-- TAB 1: COMPARE WORKSPACE -->
     <main id="tab-compare" class="tab-content active">
+      <!-- Onboarding Banner -->
       <div id="quick-hint" class="quick-hint">
         <div class="hint-icon">💡</div>
         <div class="hint-text">
@@ -82,59 +83,71 @@
         <button id="btn-dismiss-hint" class="btn-dismiss">&times;</button>
       </div>
 
-      <!-- Source A Card (Claim) -->
-      <section class="source-card card-a">
-        <div class="card-header">
-          <div class="card-tag tag-a">SOURCE A &bull; CLAIM</div>
-          <div class="card-actions">
-            <button id="btn-capture-a" class="btn-action-sm" title="Capture selected text on current webpage">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Capture Tab Selection
-            </button>
-            <button id="btn-clear-a" class="icon-btn-danger" title="Clear Claim A">&times;</button>
-          </div>
-        </div>
-
-        <div id="meta-a" class="source-meta hidden">
-          <div class="meta-title" id="title-a">Untitled Page</div>
-          <a id="link-a" href="#" target="_blank" class="meta-url">source link</a>
-        </div>
-
-        <div class="card-body">
-          <textarea id="text-a" class="passage-input" placeholder="Select text on webpage A and capture, or paste statement here..." rows="3"></textarea>
-        </div>
-      </section>
-
-      <!-- Center Swap / Quick Action Divider -->
-      <div class="passage-divider">
-        <button id="btn-swap" class="btn-swap" title="Swap Claim A and Evidence B">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
-          Swap
-        </button>
+      <!-- Quick Example Chips -->
+      <div class="example-chips-bar">
+        <span class="chips-title">Quick Try:</span>
+        <button class="chip-btn" data-chip="museum" title="Museum opening hours (Consistent)">🏛️ Museum Hours</button>
+        <button class="chip-btn" data-chip="conference" title="Conference keynote date (Contradiction)">📅 Event Dates</button>
+        <button class="chip-btn" data-chip="pricing" title="Base price vs checkout (Different Context)">🏷️ Laptop Price</button>
+        <button class="chip-btn" data-chip="jobs" title="Opposing employment trends (Insufficient Context)">📊 Job Stats</button>
       </div>
 
-      <!-- Source B Card (Evidence) -->
-      <section class="source-card card-b">
-        <div class="card-header">
-          <div class="card-tag tag-b">SOURCE B &bull; EVIDENCE</div>
-          <div class="card-actions">
-            <button id="btn-capture-b" class="btn-action-sm" title="Capture selected text on current webpage">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Capture Tab Selection
-            </button>
-            <button id="btn-clear-b" class="icon-btn-danger" title="Clear Evidence B">&times;</button>
+      <!-- Two Source Cards Grid -->
+      <div class="sources-grid">
+        <!-- Source A Card (Claim) -->
+        <section class="source-card card-a">
+          <div class="card-header">
+            <div class="card-tag tag-a">SOURCE A &bull; CLAIM</div>
+            <div class="card-actions">
+              <button id="btn-capture-a" class="btn-action-sm" title="Capture selected text on current webpage">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Capture Tab Selection
+              </button>
+              <button id="btn-clear-a" class="icon-btn-danger" title="Clear Claim A">&times;</button>
+            </div>
           </div>
+
+          <div id="meta-a" class="source-meta hidden">
+            <div class="meta-title" id="title-a">Untitled Page</div>
+            <a id="link-a" href="#" target="_blank" class="meta-url">source link</a>
+          </div>
+
+          <div class="card-body">
+            <textarea id="text-a" class="passage-input" placeholder="Select text on webpage A and capture, or paste statement here..." rows="4"></textarea>
+          </div>
+        </section>
+
+        <!-- Center Swap / Quick Action Divider -->
+        <div class="passage-divider">
+          <button id="btn-swap" class="btn-swap" title="Swap Claim A and Evidence B">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+            Swap
+          </button>
         </div>
 
-        <div id="meta-b" class="source-meta hidden">
-          <div class="meta-title" id="title-b">Untitled Page</div>
-          <a id="link-b" href="#" target="_blank" class="meta-url">source link</a>
-        </div>
+        <!-- Source B Card (Evidence) -->
+        <section class="source-card card-b">
+          <div class="card-header">
+            <div class="card-tag tag-b">SOURCE B &bull; EVIDENCE</div>
+            <div class="card-actions">
+              <button id="btn-capture-b" class="btn-action-sm" title="Capture selected text on current webpage">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Capture Tab Selection
+              </button>
+              <button id="btn-clear-b" class="icon-btn-danger" title="Clear Evidence B">&times;</button>
+            </div>
+          </div>
 
-        <div class="card-body">
-          <textarea id="text-b" class="passage-input" placeholder="Select text on webpage B and capture, or paste comparison evidence here..." rows="3"></textarea>
-        </div>
-      </section>
+          <div id="meta-b" class="source-meta hidden">
+            <div class="meta-title" id="title-b">Untitled Page</div>
+            <a id="link-b" href="#" target="_blank" class="meta-url">source link</a>
+          </div>
+
+          <div class="card-body">
+            <textarea id="text-b" class="passage-input" placeholder="Select text on webpage B and capture, or paste comparison evidence here..." rows="4"></textarea>
+          </div>
+        </section>
+      </div>
 
       <!-- Comparison Controls -->
       <div class="compare-controls">
@@ -142,7 +155,7 @@
           <span class="btn-spinner hidden" id="compare-spinner"></span>
           <span class="btn-text" id="compare-btn-text">⚡ Compare with ContextLens</span>
         </button>
-        <button id="btn-reset-all" class="btn-secondary" title="Reset workspace">Clear</button>
+        <button id="btn-reset-all" class="btn-secondary" title="Reset workspace">Clear All</button>
       </div>
 
       <!-- Error / Notice Box -->
@@ -161,10 +174,12 @@
           <h2 class="results-heading">Comparative Analysis</h2>
           <div class="results-tools">
             <button id="btn-copy-report" class="btn-tool" title="Copy markdown summary">📋 Copy</button>
-            <button id="btn-save-history" class="btn-tool" title="Save to History">💾 Saved</button>
+            <button id="btn-download-md" class="btn-tool" title="Download markdown report file">📥 .md</button>
+            <button id="btn-download-json" class="btn-tool" title="Download raw JSON data">💾 JSON</button>
           </div>
         </div>
 
+        <!-- Classification Banner -->
         <div id="classification-badge" class="classification-badge badge-neutral">
           <span id="badge-icon" class="badge-icon">🔍</span>
           <div class="badge-body">
@@ -173,11 +188,34 @@
           </div>
         </div>
 
+        <!-- Evidence-First Source Cards (Feature 4) -->
+        <div class="result-sources-grid">
+          <div class="result-source-box source-box-a">
+            <div class="result-source-header">
+              <span class="card-tag tag-a">SOURCE A &bull; CLAIM</span>
+              <a id="res-open-a" href="#" target="_blank" class="source-open-btn">Open Source ↗</a>
+            </div>
+            <div id="res-title-a" class="res-source-title">Source A</div>
+            <blockquote id="res-quote-a" class="res-source-quote"></blockquote>
+          </div>
+
+          <div class="result-source-box source-box-b">
+            <div class="result-source-header">
+              <span class="card-tag tag-b">SOURCE B &bull; EVIDENCE</span>
+              <a id="res-open-b" href="#" target="_blank" class="source-open-btn">Open Source ↗</a>
+            </div>
+            <div id="res-title-b" class="res-source-title">Source B</div>
+            <blockquote id="res-quote-b" class="res-source-quote"></blockquote>
+          </div>
+        </div>
+
+        <!-- Core Explanation -->
         <div class="result-card">
           <div class="result-card-title">Analysis Summary</div>
           <p id="result-explanation" class="result-explanation-text"></p>
         </div>
 
+        <!-- Key Differences -->
         <div class="result-card">
           <div class="result-card-title">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -186,6 +224,7 @@
           <ul id="result-differences" class="result-list"></ul>
         </div>
 
+        <!-- Missing Context -->
         <div class="result-card">
           <div class="result-card-title">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -194,6 +233,7 @@
           <ul id="result-missing" class="result-list"></ul>
         </div>
 
+        <!-- Verification Questions -->
         <div class="result-card">
           <div class="result-card-title">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -202,8 +242,9 @@
           <ul id="result-questions" class="result-list questions-list"></ul>
         </div>
 
+        <!-- Source Verification Bar -->
         <div class="result-card source-verify-card">
-          <div class="result-card-title">Source References</div>
+          <div class="result-card-title">Source Verification Links</div>
           <div class="source-links-grid">
             <a id="result-source-a" href="#" target="_blank" class="source-link-btn">
               <span>🔗 Source A:</span>
@@ -260,7 +301,7 @@
         <p class="demo-desc">Opposite employment trends without specifying year, region, or age group.</p>
         <div class="demo-preview">
           <div class="demo-pass"><strong>Claim A:</strong> "Youth unemployment increased by 3.8% reaching record levels."</div>
-          <div class="demo-pass"><strong>Evidence B:</strong> "Youth joblessness reached an all-time low of 7.2%."</div>
+          <div class="demo-pass"><strong>Evidence B:</strong> "Youth joblessness dropped to an all-time low of 7.2%."</div>
         </div>
         <button class="btn-load-demo" data-scenario="insufficient_context">Load &amp; Compare Scenario C &rarr;</button>
       </div>
@@ -275,14 +316,28 @@
       <div class="tab-header">
         <div class="history-header-row">
           <h2 class="tab-title">Research History</h2>
-          <button id="btn-clear-history" class="btn-text-danger">Clear All</button>
+          <div class="history-head-actions">
+            <button id="btn-export-all-history" class="btn-action-sm" title="Export all history to JSON">📥 Export All</button>
+            <button id="btn-clear-history" class="btn-text-danger">Clear All</button>
+          </div>
         </div>
         <div class="search-box">
-          <input type="text" id="history-search" placeholder="Search claims or topics..." class="search-input">
+          <input type="text" id="history-search" placeholder="Search claims, sources, or topics..." class="search-input">
+        </div>
+
+        <!-- Classification Filters -->
+        <div class="history-filters">
+          <button class="history-pill active" data-filter="all">All</button>
+          <button class="history-pill" data-filter="contradiction">Contradictions</button>
+          <button class="history-pill" data-filter="consistent">Consistent</button>
+          <button class="history-pill" data-filter="context">Different Context</button>
+          <button class="history-pill" data-filter="insufficient">Insufficient</button>
         </div>
       </div>
 
-      <div id="history-list" class="history-list"></div>
+      <div id="history-list" class="history-list">
+        <!-- Rendered dynamically -->
+      </div>
 
       <div id="history-empty" class="empty-state">
         <div class="empty-icon">📁</div>
@@ -309,8 +364,8 @@
 
       <div class="settings-group">
         <label class="settings-label" for="setting-api-key">LLM API Key (Optional Override)</label>
-        <input type="password" id="setting-api-key" class="settings-input" placeholder="Stored on backend or local session">
-        <p class="settings-hint">API keys are securely kept in backend .env. If left blank, the backend handles LLM calls or built-in heuristic analysis.</p>
+        <input type="password" id="setting-api-key" class="settings-input" placeholder="sk-... (OpenAI) / AIza... (Gemini) / sk-ant-... (Claude)">
+        <p class="settings-hint">Automatically routes OpenAI, Gemini, or Claude keys. If left blank, ContextLens uses its built-in offline context engine.</p>
       </div>
 
       <div class="settings-card">

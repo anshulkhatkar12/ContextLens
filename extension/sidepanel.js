@@ -7,6 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     claimB: { text: "", title: "", url: "", timestamp: null },
     lastResult: null,
     history: [],
+    historyFilter: "all",
     settings: {
       backendUrl: "http://localhost:8000",
       apiKey: ""
@@ -58,14 +59,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultDomainA = document.getElementById("result-domain-a");
   const resultDomainB = document.getElementById("result-domain-b");
   const btnCopyReport = document.getElementById("btn-copy-report");
+  const btnDownloadMd = document.getElementById("btn-download-md");
+  const btnDownloadJson = document.getElementById("btn-download-json");
   const btnSaveHistory = document.getElementById("btn-save-history");
   const btnNewComparison = document.getElementById("btn-new-comparison");
+
+  // DOM Elements - Evidence First Cards
+  const resTitleA = document.getElementById("res-title-a");
+  const resQuoteA = document.getElementById("res-quote-a");
+  const resOpenA = document.getElementById("res-open-a");
+  const resTitleB = document.getElementById("res-title-b");
+  const resQuoteB = document.getElementById("res-quote-b");
+  const resOpenB = document.getElementById("res-open-b");
+
+  // DOM Elements - Quick Chips
+  const exampleChipBtns = document.querySelectorAll(".chip-btn");
 
   // DOM Elements - History
   const historyList = document.getElementById("history-list");
   const historyEmpty = document.getElementById("history-empty");
   const historySearch = document.getElementById("history-search");
   const btnClearHistory = document.getElementById("btn-clear-history");
+  const btnExportAllHistory = document.getElementById("btn-export-all-history");
+  const historyFilterPills = document.querySelectorAll(".history-pill");
 
   // DOM Elements - Settings
   const settingBackendUrl = document.getElementById("setting-backend-url");
@@ -258,19 +274,33 @@ document.addEventListener("DOMContentLoaded", () => {
     btnCompare.addEventListener("click", handleCompare);
     btnErrorRetry.addEventListener("click", handleCompare);
 
-    // Copy Report
-    btnCopyReport.addEventListener("click", copyMarkdownSummary);
+    // Copy & Download Reports
+    if (btnCopyReport) btnCopyReport.addEventListener("click", copyMarkdownSummary);
+    if (btnDownloadMd) btnDownloadMd.addEventListener("click", downloadMarkdownReport);
+    if (btnDownloadJson) btnDownloadJson.addEventListener("click", downloadJsonAnalysis);
 
-    // Save History
-    btnSaveHistory.addEventListener("click", () => {
-      btnSaveHistory.textContent = "Saved ✓";
-      setTimeout(() => (btnSaveHistory.textContent = "💾 Saved"), 2000);
-    });
+    // Save History Indicator
+    if (btnSaveHistory) {
+      btnSaveHistory.addEventListener("click", () => {
+        btnSaveHistory.textContent = "Saved ✓";
+        setTimeout(() => (btnSaveHistory.textContent = "💾 Saved"), 2000);
+      });
+    }
 
     // Start New Comparison
-    btnNewComparison.addEventListener("click", () => {
-      resultsSection.classList.add("hidden");
-      window.scrollTo({ top: 0, behavior: "smooth" });
+    if (btnNewComparison) {
+      btnNewComparison.addEventListener("click", () => {
+        resultsSection.classList.add("hidden");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    }
+
+    // Quick Chips Handlers
+    exampleChipBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const chipType = btn.dataset.chip;
+        loadQuickChipScenario(chipType);
+      });
     });
 
     // Demos Tab Click Handlers
@@ -281,9 +311,25 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    // History Search & Clear
-    historySearch.addEventListener("input", (e) => {
-      renderHistory(e.target.value);
+    // History Search & Clear & Export
+    if (historySearch) {
+      historySearch.addEventListener("input", (e) => {
+        renderHistory(e.target.value);
+      });
+    }
+
+    if (btnExportAllHistory) {
+      btnExportAllHistory.addEventListener("click", exportAllHistory);
+    }
+
+    // History Classification Filter Pills
+    historyFilterPills.forEach((pill) => {
+      pill.addEventListener("click", () => {
+        historyFilterPills.forEach((p) => p.classList.remove("active"));
+        pill.classList.add("active");
+        state.historyFilter = pill.dataset.filter || "all";
+        renderHistory(historySearch ? historySearch.value : "");
+      });
     });
 
     btnClearHistory.addEventListener("click", () => {
@@ -577,6 +623,33 @@ document.addEventListener("DOMContentLoaded", () => {
       resultQuestions.innerHTML = "<li>Review original publication dates and primary sources.</li>";
     }
 
+    // Populate Evidence-First Source Cards
+    if (resTitleA && resQuoteA) {
+      resTitleA.textContent = state.claimA.title || "Source A";
+      resQuoteA.textContent = `"${state.claimA.text || ""}"`;
+      if (resOpenA) {
+        if (state.claimA.url) {
+          resOpenA.href = state.claimA.url;
+          resOpenA.style.display = "inline-block";
+        } else {
+          resOpenA.style.display = "none";
+        }
+      }
+    }
+
+    if (resTitleB && resQuoteB) {
+      resTitleB.textContent = state.claimB.title || "Source B";
+      resQuoteB.textContent = `"${state.claimB.text || ""}"`;
+      if (resOpenB) {
+        if (state.claimB.url) {
+          resOpenB.href = state.claimB.url;
+          resOpenB.style.display = "inline-block";
+        } else {
+          resOpenB.style.display = "none";
+        }
+      }
+    }
+
     // Source links
     const urlA = state.claimA.url || "#";
     const urlB = state.claimB.url || "#";
@@ -601,8 +674,82 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------------------------------------
-  // DEMONSTRATION MODE
+  // QUICK CHIPS & DEMO SCENARIOS
   // ----------------------------------------------------------------
+  function loadQuickChipScenario(chipType) {
+    switchTab("compare");
+
+    if (chipType === "museum") {
+      state.claimA = {
+        id: "chip_museum_a",
+        text: "The museum is open from 9 to 5 on weekdays.",
+        title: "City Museum Official Hours",
+        url: "https://citymuseum.mock/hours",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_museum_b",
+        text: "Visitor information lists the museum weekday opening from 9 to 5.",
+        title: "Metro Tourism Guide",
+        url: "https://metrotourism.mock/museum-guide",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "conference") {
+      state.claimA = {
+        id: "chip_conf_a",
+        text: "The DevSummit 2026 opening keynote takes place on Friday, November 14th at 9:00 AM.",
+        title: "TechNews Daily - Preview",
+        url: "https://technewsdaily.mock/devsummit-preview",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_conf_b",
+        text: "All main conference talks including the opening keynote are confirmed for Saturday, November 15th.",
+        title: "EventHub Official Schedule",
+        url: "https://eventhub.mock/devsummit-official",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "pricing") {
+      state.claimA = {
+        id: "chip_price_a",
+        text: "The ZenBook Ultra is listed starting at $499 on the manufacturer product page.",
+        title: "HardwareDigest Review",
+        url: "https://hardwaredigest.mock/zenbook-review",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_price_b",
+        text: "The total order came to $549 for the ZenBook Ultra at checkout with shipping and taxes.",
+        title: "Buyer Forum Receipt",
+        url: "https://buyerforum.mock/zenbook-order-549",
+        timestamp: new Date().toISOString()
+      };
+    } else if (chipType === "jobs") {
+      state.claimA = {
+        id: "chip_jobs_a",
+        text: "Youth unemployment increased by 3.8% reaching record levels in the latest quarterly survey.",
+        title: "Economic Monitor Report",
+        url: "https://econmonitor.mock/youth-jobs-report",
+        timestamp: new Date().toISOString()
+      };
+      state.claimB = {
+        id: "chip_jobs_b",
+        text: "Youth joblessness dropped to an all-time low of 7.2% as new tech internships surged.",
+        title: "Global Career Insights",
+        url: "https://careerinsights.mock/labor-statistics",
+        timestamp: new Date().toISOString()
+      };
+    }
+
+    updateCardA();
+    updateCardB();
+    saveCurrentInputs();
+
+    setTimeout(() => {
+      handleCompare();
+    }, 150);
+  }
+
   function loadDemoScenario(scenarioKey) {
     switchTab("compare");
 
@@ -920,13 +1067,21 @@ document.addEventListener("DOMContentLoaded", () => {
     historyBadge.textContent = state.history.length;
 
     const filtered = state.history.filter((item) => {
+      const classification = (item.result?.classification || "").toLowerCase();
+
+      // Check category filter pill
+      if (state.historyFilter && state.historyFilter !== "all") {
+        if (!classification.includes(state.historyFilter.toLowerCase())) {
+          return false;
+        }
+      }
+
       if (!query) return true;
       const q = query.toLowerCase();
       const textA = (item.claim_a?.text || "").toLowerCase();
       const textB = (item.claim_b?.text || "").toLowerCase();
       const titleA = (item.claim_a?.title || "").toLowerCase();
       const titleB = (item.claim_b?.title || "").toLowerCase();
-      const classification = (item.result?.classification || "").toLowerCase();
       return (
         textA.includes(q) ||
         textB.includes(q) ||
@@ -1064,11 +1219,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function copyMarkdownSummary() {
-    if (!state.lastResult) return;
+  function buildMarkdownSummary() {
+    if (!state.lastResult) return "";
     const res = state.lastResult;
 
-    const md = `### ContextLens Analysis Report
+    return `### ContextLens Analysis Report
 **Classification:** ${res.classification.toUpperCase()}
 
 **Source A (${state.claimA.title || "Source A"}):**
@@ -1094,6 +1249,55 @@ ${(res.verification_questions || []).map((q) => `- ${q}`).join("\n")}
 ---
 *Generated by ContextLens - "Evidence before conclusions."*
 `;
+  }
+
+  function downloadFile(content, filename, type) {
+    const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
+  }
+
+  function downloadMarkdownReport() {
+    if (!state.lastResult) return;
+    const md = buildMarkdownSummary();
+    const filename = `ContextLens_Report_${Date.now()}.md`;
+    downloadFile(md, filename, "text/markdown;charset=utf-8");
+  }
+
+  function downloadJsonAnalysis() {
+    if (!state.lastResult) return;
+    const data = {
+      timestamp: new Date().toISOString(),
+      claim_a: state.claimA,
+      claim_b: state.claimB,
+      result: state.lastResult
+    };
+    const json = JSON.stringify(data, null, 2);
+    const filename = `ContextLens_Analysis_${Date.now()}.json`;
+    downloadFile(json, filename, "application/json;charset=utf-8");
+  }
+
+  function exportAllHistory() {
+    if (!state.history || state.history.length === 0) {
+      alert("No research history to export yet. Perform some comparisons first!");
+      return;
+    }
+    const json = JSON.stringify(state.history, null, 2);
+    const filename = `ContextLens_History_${Date.now()}.json`;
+    downloadFile(json, filename, "application/json;charset=utf-8");
+  }
+
+  function copyMarkdownSummary() {
+    const md = buildMarkdownSummary();
+    if (!md) return;
 
     navigator.clipboard.writeText(md).then(() => {
       btnCopyReport.textContent = "Copied ✓";
