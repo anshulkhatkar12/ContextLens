@@ -26,6 +26,9 @@ app = FastAPI(
     version="2.0.0",
 )
 
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+
 # Configure CORS to allow Chrome extension and local clients
 app.add_middleware(
     CORSMiddleware,
@@ -34,6 +37,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    errors = exc.errors()
+    first_msg = errors[0].get("msg", "Validation error") if errors else "Validation error"
+    if first_msg.startswith("Value error, "):
+        first_msg = first_msg[len("Value error, "):]
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={"detail": first_msg},
+    )
 
 
 @app.get("/")

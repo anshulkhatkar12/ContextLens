@@ -1,5 +1,5 @@
 """
-ContextLens – Pydantic request/response schemas.
+ContextLens – Pydantic request and response schemas.
 
 Classification values (primary):
   SUPPORTED             – evidence directly supports the claim
@@ -9,12 +9,14 @@ Classification values (primary):
   INSUFFICIENT_EVIDENCE – available evidence does not justify a conclusion
   UNRELATED             – evidence does not meaningfully address the claim
 
-For backward compatibility, the old labels (consistent, possible_contradiction,
-different_context, insufficient_context) are still accepted by the frontend.
+Legacy labels (consistent, possible_contradiction, different_context, insufficient_context)
+are accepted and mapped for backward compatibility.
 """
 
-from typing import List, Optional, Literal
-from pydantic import BaseModel, Field, field_validator
+from __future__ import annotations
+
+from typing import Any, List, Optional, Literal, Set
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ---------------------------------------------------------------------------
@@ -23,13 +25,24 @@ from pydantic import BaseModel, Field, field_validator
 
 class ClaimItem(BaseModel):
     """A single text passage with optional source metadata."""
+    model_config = ConfigDict(extra="ignore")
+
     text: str = Field(..., description="The selected text passage")
     title: Optional[str] = Field(default="Untitled Source", description="Webpage or document title")
     url: Optional[str] = Field(default="", description="Source URL")
 
+    @field_validator("text", mode="before")
+    @classmethod
+    def validate_text_not_empty(cls, v: Any) -> str:
+        if v is None or not str(v).strip():
+            raise ValueError("Passage text cannot be empty.")
+        return str(v)
+
 
 class CompareRequest(BaseModel):
     """Payload for the /compare endpoint."""
+    model_config = ConfigDict(extra="ignore")
+
     claim_a: ClaimItem
     claim_b: ClaimItem
 
@@ -38,8 +51,14 @@ class CompareRequest(BaseModel):
 # Additional source model
 # ---------------------------------------------------------------------------
 
+RelationshipType = Literal["supports", "contradicts", "contextualizes", "unclear"]
+RetrievalStatusType = Literal["retrieved", "snippet_only", "search_result_only", "not_retrieved"]
+
+
 class AdditionalSource(BaseModel):
-    """A source discovered during the search phase."""
+    """A source discovered during external search."""
+    model_config = ConfigDict(extra="ignore")
+
     title: str = Field(..., description="Title of the source")
     url: str = Field(..., description="URL of the source")
     publisher: Optional[str] = Field(default=None, description="Publisher or domain name")
@@ -48,7 +67,7 @@ class AdditionalSource(BaseModel):
         default=None,
         description="Type: news, academic, government, forum, primary, etc."
     )
-    relationship_to_claim: Literal["supports", "contradicts", "contextualizes", "unclear"] = Field(
+    relationship_to_claim: RelationshipType = Field(
         default="unclear",
         description="How this source relates to the claim"
     )
@@ -64,34 +83,76 @@ class AdditionalSource(BaseModel):
         default=None,
         description="Known limitations of this source's coverage or methodology"
     )
-    retrieval_status: Literal["retrieved", "snippet_only", "search_result_only", "not_retrieved"] = Field(
+    retrieval_status: RetrievalStatusType = Field(
         default="search_result_only",
         description="What level of content was actually obtained"
     )
+
+    @field_validator("relationship_to_claim", mode="before")
+    @classmethod
+    def normalize_relationship(cls, v: Any) -> str:
+        if not v:
+            return "unclear"
+        s = str(v).strip().lower()
+        if "support" in s:
+            return "supports"
+        if "contradict" in s:
+            return "contradicts"
+        if "context" in s or "qualif" in s:
+            return "contextualizes"
+        return "unclear"
+
+    @field_validator("retrieval_status", mode="before")
+    @classmethod
+    def normalize_retrieval_status(cls, v: Any) -> str:
+        if not v:
+            return "search_result_only"
+        s = str(v).strip().lower()
+        if s in ("retrieved", "snippet_only", "search_result_only", "not_retrieved"):
+            return s
+        if "snippet" in s:
+            return "snippet_only"
+        if "retriev" in s:
+            return "retrieved"
+        return "search_result_only"
 
 
 # ---------------------------------------------------------------------------
 # Primary analysis response
 # ---------------------------------------------------------------------------
 
-VALID_CLASSIFICATIONS = {
-    # New canonical labels
+VALID_CLASSIFICATIONS: Set[str] = {
+    # Canonical labels
     "SUPPORTED",
     "CONTRADICTED",
     "PARTIALLY_SUPPORTED",
     "DIFFERENT_CONTEXT",
     "INSUFFICIENT_EVIDENCE",
     "UNRELATED",
-    # Old labels kept for backward compatibility
+    # Legacy labels
     "consistent",
     "possible_contradiction",
     "different_context",
     "insufficient_context",
 }
 
+ClassificationType = Literal[
+    "SUPPORTED",
+    "CONTRADICTED",
+    "PARTIALLY_SUPPORTED",
+    "DIFFERENT_CONTEXT",
+    "INSUFFICIENT_EVIDENCE",
+    "UNRELATED",
+    "consistent",
+    "possible_contradiction",
+    "different_context",
+    "insufficient_context",
+]
+
 
 class CompareResponse(BaseModel):
     """Full analysis result returned by the /compare endpoint."""
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     # Core classification
     classification: str = Field(
@@ -184,32 +245,61 @@ class CompareResponse(BaseModel):
         description="Which engine produced this result: llm, heuristic, or error"
     )
 
-    @field_validator("classification")
+    @field_validator("classification", mode="before")
     @classmethod
-    def validate_classification(cls, v: str) -> str:
-        if v not in VALID_CLASSIFICATIONS:
-            # Normalise case before rejecting
-            upper = v.upper()
-            lower = v.lower()
-            if upper in VALID_CLASSIFICATIONS:
-                return upper
-            if lower in VALID_CLASSIFICATIONS:
-                return lower
-            # Accept partial matches for resilience
-            for label in VALID_CLASSIFICATIONS:
-                if label.lower() in lower or lower in label.lower():
-                    return label
-            # Fall back gracefully
+    def validate_and_normalize_classification(cls, v: Any) -> str:
+        if not v:
             return "INSUFFICIENT_EVIDENCE"
-        return v
+        raw = str(v).strip().strip("*_`'\"")
+        if raw in VALID_CLASSIFICATIONS:
+            return raw
 
-    def model_post_init(self, __context) -> None:
+        upper = raw.upper()
+        lower = raw.lower()
+        if upper in VALID_CLASSIFICATIONS:
+            return upper
+        if lower in VALID_CLASSIFICATIONS:
+            return lower
+
+        # Robust fuzzy / substring mapping
+        if "CONTRADICT" in upper:
+            return "CONTRADICTED"
+        if "PARTIAL" in upper:
+            return "PARTIALLY_SUPPORTED"
+        if "SUPPORT" in upper:
+            return "SUPPORTED"
+        if "CONTEXT" in upper:
+            return "DIFFERENT_CONTEXT"
+        if "UNRELATED" in upper:
+            return "UNRELATED"
+
+        for label in VALID_CLASSIFICATIONS:
+            if label.lower() in lower or lower in label.lower():
+                return label
+
+        return "INSUFFICIENT_EVIDENCE"
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_confidence(cls, v: Any) -> Optional[float]:
+        if v is None or v == "":
+            return None
+        try:
+            val = float(v)
+            # If provided as percentage > 1.0 (e.g. 85), scale down
+            if val > 1.0 and val <= 100.0:
+                val = val / 100.0
+            return max(0.0, min(1.0, val))
+        except (ValueError, TypeError):
+            return None
+
+    def model_post_init(self, context: Any) -> None:
         """Sync legacy fields with new canonical fields."""
-        # Sync explanation <-> analysis_summary
+        super().model_post_init(context)
         if not self.analysis_summary and self.explanation:
-            object.__setattr__(self, "analysis_summary", self.explanation)
+            self.analysis_summary = self.explanation
         elif not self.explanation and self.analysis_summary:
-            object.__setattr__(self, "explanation", self.analysis_summary)
+            self.explanation = self.analysis_summary
 
 
 # ---------------------------------------------------------------------------
@@ -218,6 +308,8 @@ class CompareResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Standard error response."""
+    model_config = ConfigDict(extra="ignore")
+
     error: str
     detail: Optional[str] = None
     engine: str = "error"
