@@ -59,6 +59,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const badgeIcon = document.getElementById("badge-icon");
   const badgeLabel = document.getElementById("badge-label");
   const badgeSub = document.getElementById("badge-sub");
+  const engineBadge = document.getElementById("engine-badge");
   const resultExplanation = document.getElementById("result-explanation");
   const resultDifferences = document.getElementById("result-differences");
   const resultMissing = document.getElementById("result-missing");
@@ -67,6 +68,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const resultSourceB = document.getElementById("result-source-b");
   const resultDomainA = document.getElementById("result-domain-a");
   const resultDomainB = document.getElementById("result-domain-b");
+  // New v2 elements
+  const confidenceCard = document.getElementById("confidence-card");
+  const confidenceFill = document.getElementById("confidence-fill");
+  const confidencePct = document.getElementById("confidence-pct");
+  const confidenceReason = document.getElementById("confidence-reason");
+  const supportingCard = document.getElementById("supporting-card");
+  const resultSupporting = document.getElementById("result-supporting");
+  const contradictingCard = document.getElementById("contradicting-card");
+  const resultContradicting = document.getElementById("result-contradicting");
+  const additionalSourcesCard = document.getElementById("additional-sources-card");
+  const additionalSourcesList = document.getElementById("additional-sources-list");
+  const limitationsCard = document.getElementById("limitations-card");
+  const resultLimitations = document.getElementById("result-limitations");
   const btnCopyReport = document.getElementById("btn-copy-report");
   const btnDownloadMd = document.getElementById("btn-download-md");
   const btnDownloadJson = document.getElementById("btn-download-json");
@@ -655,41 +669,108 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ----------------------------------------------------------------
-  // RESULT RENDERING
+  // RESULT RENDERING (v2 — supports new and legacy schema)
   // ----------------------------------------------------------------
+
+  /** Normalise classification string to one of the canonical values. */
+  function normalizeClassification(raw) {
+    if (!raw) return "insufficient";
+    const c = raw.toLowerCase().replace(/_/g, "");
+    if (c === "supported")                                          return "supported";
+    if (c === "contradicted" || c === "possiblecontradiction")      return "contradicted";
+    if (c === "partiallysupported")                                 return "partially";
+    if (c === "differentcontext" || c === "context")                return "context";
+    if (c === "insufficientevidence" || c === "insufficientcontext") return "insufficient";
+    if (c === "unrelated")                                          return "unrelated";
+    // Substring fallbacks for resilience
+    if (c.includes("contradict"))  return "contradicted";
+    if (c.includes("partial"))     return "partially";
+    if (c.includes("support"))     return "supported";
+    if (c.includes("context"))     return "context";
+    if (c.includes("unrelated"))   return "unrelated";
+    return "insufficient";
+  }
+
+  const BADGE_CONFIG = {
+    supported:    { cls: "badge-consistent",    icon: "✅", label: "SUPPORTED",           sub: "The evidence directly supports the claim." },
+    contradicted: { cls: "badge-contradiction", icon: "⚠️", label: "CONTRADICTED",         sub: "Reliable evidence conflicts with the claim under comparable conditions." },
+    partially:    { cls: "badge-partial",       icon: "🔶", label: "PARTIALLY SUPPORTED",  sub: "Some aspects are supported, but the full claim is not established." },
+    context:      { cls: "badge-context",       icon: "⏱️", label: "DIFFERENT CONTEXT",     sub: "Passages differ due to dates, scope, definitions, or conditions." },
+    insufficient: { cls: "badge-insufficient",  icon: "❓", label: "INSUFFICIENT EVIDENCE", sub: "The available evidence does not justify a conclusion." },
+    unrelated:    { cls: "badge-unrelated",     icon: "🔗", label: "UNRELATED",            sub: "The evidence does not meaningfully address the claim." },
+  };
+
   function renderAnalysisResult(result) {
     resultsSection.classList.remove("hidden");
 
-    // Configure Badge
-    const classification = (result.classification || "insufficient_context").toLowerCase();
-    classificationBadge.className = "classification-badge";
+    // --- Classification Badge ---
+    const cls = normalizeClassification(result.classification);
+    const cfg = BADGE_CONFIG[cls] || BADGE_CONFIG.insufficient;
+    classificationBadge.className = "classification-badge " + cfg.cls;
+    badgeIcon.textContent  = cfg.icon;
+    badgeLabel.textContent = cfg.label;
+    badgeSub.textContent   = cfg.sub;
 
-    if (classification === "possible_contradiction" || classification.includes("contradiction")) {
-      classificationBadge.classList.add("badge-contradiction");
-      badgeIcon.textContent = "⚠️";
-      badgeLabel.textContent = "POSSIBLE CONTRADICTION";
-      badgeSub.textContent = "The passages appear to make incompatible claims about the same subject.";
-    } else if (classification === "consistent" || classification.includes("consistent")) {
-      classificationBadge.classList.add("badge-consistent");
-      badgeIcon.textContent = "✅";
-      badgeLabel.textContent = "CONSISTENT";
-      badgeSub.textContent = "The passages appear compatible or support similar conclusions.";
-    } else if (classification === "different_context" || classification.includes("context")) {
-      classificationBadge.classList.add("badge-context");
-      badgeIcon.textContent = "⏱️";
-      badgeLabel.textContent = "DIFFERENT CONTEXT";
-      badgeSub.textContent = "Statements may differ due to timing, scope, definitions, or circumstances.";
-    } else {
-      classificationBadge.classList.add("badge-insufficient");
-      badgeIcon.textContent = "❓";
-      badgeLabel.textContent = "INSUFFICIENT CONTEXT";
-      badgeSub.textContent = "There is not enough information to verify the relationship.";
+    // Engine badge
+    if (engineBadge) {
+      if (result.engine === "heuristic") {
+        engineBadge.textContent = "⚙️ Heuristic";
+        engineBadge.className = "engine-badge engine-heuristic";
+        engineBadge.classList.remove("hidden");
+      } else if (result.engine === "llm") {
+        engineBadge.textContent = "🤖 AI";
+        engineBadge.className = "engine-badge engine-llm";
+        engineBadge.classList.remove("hidden");
+      } else {
+        engineBadge.classList.add("hidden");
+      }
     }
 
-    // Explanation
-    resultExplanation.textContent = result.explanation || "No explanation provided.";
+    // --- Analysis Summary ---
+    const summary = result.analysis_summary || result.explanation || "No explanation provided.";
+    resultExplanation.textContent = summary;
 
-    // Key Differences
+    // --- Confidence ---
+    if (confidenceCard && result.confidence !== null && result.confidence !== undefined) {
+      const pct = Math.round(result.confidence * 100);
+      confidenceFill.style.width = pct + "%";
+      confidenceFill.style.background = pct >= 70 ? "#22c55e" : pct >= 40 ? "#f59e0b" : "#ef4444";
+      confidencePct.textContent = pct + "%";
+      confidenceReason.textContent = result.confidence_reason || "";
+      confidenceCard.classList.remove("hidden");
+    } else if (confidenceCard) {
+      confidenceCard.classList.add("hidden");
+    }
+
+    // --- Supporting Points ---
+    const supporting = Array.isArray(result.supporting_points) ? result.supporting_points : [];
+    if (supportingCard && supporting.length > 0) {
+      resultSupporting.innerHTML = "";
+      supporting.forEach((p) => {
+        const li = document.createElement("li");
+        li.textContent = p;
+        resultSupporting.appendChild(li);
+      });
+      supportingCard.classList.remove("hidden");
+    } else if (supportingCard) {
+      supportingCard.classList.add("hidden");
+    }
+
+    // --- Contradicting Points ---
+    const contradicting = Array.isArray(result.contradicting_points) ? result.contradicting_points : [];
+    if (contradictingCard && contradicting.length > 0) {
+      resultContradicting.innerHTML = "";
+      contradicting.forEach((p) => {
+        const li = document.createElement("li");
+        li.textContent = p;
+        resultContradicting.appendChild(li);
+      });
+      contradictingCard.classList.remove("hidden");
+    } else if (contradictingCard) {
+      contradictingCard.classList.add("hidden");
+    }
+
+    // --- Key Differences ---
     resultDifferences.innerHTML = "";
     const diffs = Array.isArray(result.key_differences) ? result.key_differences : [];
     if (diffs.length > 0) {
@@ -702,7 +783,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resultDifferences.innerHTML = "<li>No significant factual divergence identified.</li>";
     }
 
-    // Missing Context
+    // --- Missing Context ---
     resultMissing.innerHTML = "";
     const missing = Array.isArray(result.missing_context) ? result.missing_context : [];
     if (missing.length > 0) {
@@ -715,7 +796,7 @@ document.addEventListener("DOMContentLoaded", () => {
       resultMissing.innerHTML = "<li>Context appears sufficient for preliminary assessment.</li>";
     }
 
-    // Verification Questions
+    // --- Verification Questions ---
     resultQuestions.innerHTML = "";
     const questions = Array.isArray(result.verification_questions) ? result.verification_questions : [];
     if (questions.length > 0) {
@@ -755,7 +836,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // Source links
+    // --- Source Links ---
     const urlA = state.claimA.url || "#";
     const urlB = state.claimB.url || "#";
     resultSourceA.href = urlA;
@@ -776,6 +857,76 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       resultSourceB.style.pointerEvents = "auto";
     }
+
+    // --- Additional Sources ---
+    renderAdditionalSources(result.additional_sources || []);
+
+    // --- Limitations ---
+    const limitations = Array.isArray(result.limitations) ? result.limitations : [];
+    if (limitationsCard && limitations.length > 0) {
+      resultLimitations.innerHTML = "";
+      limitations.forEach((l) => {
+        const li = document.createElement("li");
+        li.textContent = l;
+        resultLimitations.appendChild(li);
+      });
+      limitationsCard.classList.remove("hidden");
+    } else if (limitationsCard) {
+      limitationsCard.classList.add("hidden");
+    }
+  }
+
+  function renderAdditionalSources(sources) {
+    if (!additionalSourcesCard || !additionalSourcesList) return;
+
+    if (!Array.isArray(sources) || sources.length === 0) {
+      additionalSourcesCard.classList.add("hidden");
+      return;
+    }
+
+    additionalSourcesList.innerHTML = "";
+
+    const relConfig = {
+      supports:       { cls: "rel-supports",     icon: "✅", label: "Supports" },
+      contradicts:    { cls: "rel-contradicts",  icon: "⚠️", label: "Contradicts" },
+      contextualizes: { cls: "rel-context",      icon: "ℹ️", label: "Contextualizes" },
+      unclear:        { cls: "rel-unclear",      icon: "❓", label: "Unclear" },
+    };
+
+    sources.forEach((src) => {
+      const rel = relConfig[src.relationship_to_claim] || relConfig.unclear;
+      const statusLabel = src.retrieval_status === "snippet_only" ? "Snippet" :
+                          src.retrieval_status === "retrieved" ? "Retrieved" :
+                          "Search result only";
+
+      // Validate URL before rendering as clickable link
+      let safeUrl = "#";
+      try {
+        const parsed = new URL(src.url);
+        if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+          safeUrl = src.url;
+        }
+      } catch (_) { /* invalid URL */ }
+
+      const card = document.createElement("div");
+      card.className = "additional-source-item";
+      card.innerHTML = `
+        <div class="source-item-header">
+          <span class="source-rel-badge ${rel.cls}">${rel.icon} ${rel.label}</span>
+          <span class="source-retrieval-label">${escapeHtml(statusLabel)}</span>
+        </div>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="source-item-title">
+          ${escapeHtml(src.title || src.url)}
+        </a>
+        ${src.publisher ? `<div class="source-item-publisher">${escapeHtml(src.publisher)}${src.published_date ? " · " + escapeHtml(src.published_date) : ""}</div>` : ""}
+        ${src.relevance_reason ? `<div class="source-item-relevance">${escapeHtml(src.relevance_reason)}</div>` : ""}
+        ${src.supporting_excerpt ? `<blockquote class="source-item-excerpt">${escapeHtml(src.supporting_excerpt.substring(0, 250))}${src.supporting_excerpt.length > 250 ? "…" : ""}</blockquote>` : ""}
+        ${src.limitations ? `<div class="source-item-limitations">⚠ ${escapeHtml(src.limitations)}</div>` : ""}
+      `;
+      additionalSourcesList.appendChild(card);
+    });
+
+    additionalSourcesCard.classList.remove("hidden");
   }
 
   // ----------------------------------------------------------------
@@ -1328,8 +1479,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!state.lastResult) return "";
     const res = state.lastResult;
 
-    return `### ContextLens Analysis Report
-**Classification:** ${res.classification.toUpperCase()}
+    const supportingMd = (res.supporting_points || []).map((p) => `- ${p}`).join("\n");
+    const contradictingMd = (res.contradicting_points || []).map((p) => `- ${p}`).join("\n");
+    const limitationsMd = (res.limitations || []).map((l) => `- ${l}`).join("\n");
+    const sourcesMd = (res.additional_sources || []).map((s) =>
+      `- [${s.title}](${s.url}) — ${s.relationship_to_claim}: ${s.relevance_reason || ""}${s.limitations ? " [Limitation: " + s.limitations + "]" : ""}`
+    ).join("\n");
+    const confidenceLine = res.confidence !== null && res.confidence !== undefined
+      ? `**Confidence:** ${Math.round(res.confidence * 100)}% — ${res.confidence_reason || ""}`
+      : "";
+
+    const md = `### ContextLens Analysis Report
+**Classification:** ${(res.classification || "").toUpperCase()}
+**Engine:** ${res.engine || "unknown"}
 
 **Source A (${state.claimA.title || "Source A"}):**
 > ${state.claimA.text}
@@ -1340,20 +1502,31 @@ document.addEventListener("DOMContentLoaded", () => {
 *URL: ${state.claimB.url || "N/A"}*
 
 **Analysis Summary:**
-${res.explanation}
+${res.analysis_summary || res.explanation || ""}
+
+${confidenceLine}
+
+**Supporting Evidence:**
+${supportingMd || "None identified."}
+
+**Contradicting Evidence:**
+${contradictingMd || "None identified."}
 
 **Key Differences:**
-${(res.key_differences || []).map((d) => `- ${d}`).join("\n")}
+${(res.key_differences || []).map((d) => `- ${d}`).join("\n") || "None identified."}
 
 **Missing Context to Verify:**
-${(res.missing_context || []).map((m) => `- ${m}`).join("\n")}
+${(res.missing_context || []).map((m) => `- ${m}`).join("\n") || "None identified."}
 
 **Suggested Verification Questions:**
-${(res.verification_questions || []).map((q) => `- ${q}`).join("\n")}
+${(res.verification_questions || []).map((q) => `- ${q}`).join("\n") || "None."}
 
+${sourcesMd ? `**Additional Sources Discovered:**\n${sourcesMd}\n` : ""}
+${limitationsMd ? `**Analysis Limitations:**\n${limitationsMd}\n` : ""}
 ---
-*Generated by ContextLens - "Evidence before conclusions."*
+*Generated by ContextLens v2 — "Evidence before conclusions."*
 `;
+    return md;
   }
 
   function downloadFile(content, filename, type) {

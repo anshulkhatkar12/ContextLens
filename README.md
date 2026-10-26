@@ -31,37 +31,67 @@ ContextLens never automatically declares a source false. Instead, it exposes the
 2. **Quick Try Scenario Chips:**
    - 1-click preset chips for instant live testing:
      - `🏛️ Museum Hours` &rarr; Consistent schedule corroboration.
-     - `📅 Event Dates` &rarr; Incompatible event schedules (Possible Contradiction).
+     - `📅 Event Dates` &rarr; Incompatible event schedules (Contradicted / Contradiction).
      - `🏷️ Laptop Price` &rarr; Base MSRP vs. Final Checkout Invoice (Different Context).
-     - `📊 Job Stats` &rarr; Opposing employment metrics without cohort data (Insufficient Context).
+     - `📊 Job Stats` &rarr; Opposing employment metrics without cohort data (Insufficient Evidence).
 
 3. **Evidence-First AI Comparative Analysis:**
-   - Evaluates both passages and classifies their relationship into 4 standard categories:
-     - ⚠️ **POSSIBLE CONTRADICTION:** Incompatible claims about the same subject under comparable conditions.
-     - ✅ **CONSISTENT:** Passages support similar conclusions or compatible facts.
-     - ⏱️ **DIFFERENT CONTEXT:** Variations due to dates, pricing scope, definitions, or updates.
-     - ❓ **INSUFFICIENT CONTEXT:** Lacks essential geographic boundaries, dates, or population details.
+   - Evaluates both passages and classifies their relationship into 6 rich semantic categories:
+     - ✅ **SUPPORTED:** The evidence directly supports the claim under comparable conditions.
+     - ⚠️ **CONTRADICTED:** Reliable evidence directly conflicts with the claim.
+     - 🔶 **PARTIALLY SUPPORTED:** Some aspects are established, but the full scope is not verified.
+     - ⏱️ **DIFFERENT CONTEXT:** Statements differ due to dates, scope, definitions, or methods.
+     - ❓ **INSUFFICIENT EVIDENCE:** The available evidence does not justify a factual conclusion.
+     - 🔗 **UNRELATED:** The evidence does not meaningfully address the claim.
 
 4. **Evidence-First Source Cards:**
    - Visual side-by-side cards displaying Source A and Source B direct quotes.
    - 1-click "Open Source ↗" links to verify the primary publisher immediately.
 
-5. **Export & Sharing Tools:**
+5. **External Source Discovery & Credibility Evaluation:**
+   - Automatically identifies unanswered questions and generates targeted web queries.
+   - Discovers independent sources via SerpAPI, Brave Search, or DuckDuckGo fallback.
+   - Evaluates domain authority, source type, and directional stance without fabricating citations.
+
+6. **Structured Research Output:**
+   - **Executive Summary:** Plain-language synthesis grounded in the passages.
+   - **Confidence Score & Reason:** Transparent uncertainty estimation with limitations.
+   - **Supporting & Contradicting Evidence:** Explicit excerpt breakdown.
+   - **Key Differences & Missing Context:** Factual divergences and parameters to investigate.
+   - **Suggested Verification Questions:** Actionable follow-up queries.
+   - **Discovered Sources:** Independent links with AI relevance assessments.
+
+7. **Local Models (Qwen) Without API Keys + Multi-Layer Guardrails:**
+   - **Zero API Keys Required:** Runs directly with local LLMs such as **Qwen** (`qwen2.5:latest`, `qwen2.5:7b`, `qwen2.5:1.5b`) via Ollama (`http://localhost:11434`), LM Studio, or vLLM.
+   - **AI Safety & Grounding Guardrails:**
+     - 🛡️ **Prompt Injection Defense:** Neutralizes system override instructions, DAN jailbreaks, and adversarial directives embedded in untrusted input passages.
+     - 🔍 **Grounding & Anti-Hallucination Guardrail:** Lexically and semantically verifies that quotes and points cited are genuinely grounded in the source passages, discarding fabricated claims.
+     - 🏷️ **Canonical Taxonomy Enforcement:** Strict normalization into the 6 canonical categories.
+     - 🔗 **URL & Citation Integrity:** Strictly blocks local models from fabricating non-existent external URLs.
+     - ⚖️ **Confidence Calibration:** Automatically clamps overconfident scores when evidence is sparse or ambiguous.
+     - 🛠️ **JSON Repair:** Robust parsing of markdown-fenced or conversational local LLM output.
+
+8. **Multi-LLM Provider Engine with 100% Offline Fallback:**
+   - Intelligently routes API keys entered in settings:
+     - Local Ollama / Qwen &rarr; Zero API key offline local inference
+     - `sk-...` &rarr; OpenAI GPT-4o / GPT-4o-mini
+     - `AIza...` &rarr; Google Gemini 1.5 Pro / Flash
+     - `sk-ant-...` &rarr; Anthropic Claude 3.5 Sonnet
+   - **Built-in Deterministic Engine:** Zero external dependencies needed; ContextLens includes a built-in semantic context engine that runs 100% offline.
+
+9. **Export & Sharing Tools:**
    - **📋 Copy Report:** Copy structured markdown report to clipboard.
    - **📥 Download .md:** Download standalone markdown research report.
    - **💾 Export JSON:** Download raw JSON comparison data for archives or programmatic pipelines.
    - **📥 Export All History:** Export complete research history as a single JSON file.
 
-6. **History with Category Filter Pills:**
-   - Filter your research history by classification: `All`, `Contradictions`, `Consistent`, `Different Context`, or `Insufficient`.
-   - Real-time text search across claims, sources, and conclusions.
+10. **Theme System & Personalization:**
+    - Multiple curated themes (Dark, Light, Cyberpunk, Forest, Sunset, etc.) and typography options.
+    - Glassmorphism effects, live preview, and reading experience preferences.
 
-7. **Multi-LLM Provider Engine with 100% Offline Fallback:**
-   - Intelligently routes API keys entered in settings:
-     - `sk-...` &rarr; OpenAI GPT-4o / GPT-4o-mini
-     - `AIza...` &rarr; Google Gemini 1.5 Pro / Flash
-     - `sk-ant-...` &rarr; Anthropic Claude 3.5 Sonnet
-   - **Zero API Key Needed for Demos:** ContextLens includes a built-in semantic context engine that runs 100% offline.
+11. **Local Research History & Privacy by Design:**
+    - Searchable local storage (`chrome.storage.local`) with category filter pills (`All`, `Contradictions`, `Consistent`, `Different Context`, `Insufficient`).
+    - Zero passive tracking or browsing history collection. Text captured strictly on explicit user action.
 
 ---
 
@@ -73,20 +103,29 @@ contextlens/
 │   ├── manifest.json          # MV3 configuration & permissions
 │   ├── sidepanel.html         # Main docked side panel UI (Linear/Arc aesthetic)
 │   ├── sidepanel.css          # Modern dark-mode styling with glassmorphism & responsive grid
-│   ├── sidepanel.js           # Extension controller, state, export tools & offline engine
+│   ├── sidepanel.js           # Extension controller, state, export tools & client fallback
 │   ├── popup.html             # Compact popup view
+│   ├── appearance.html        # Theme customizer & personalization settings UI
+│   ├── appearance.css         # Theme customizer styles
+│   ├── appearance.js          # Theme selector & personalization logic
+│   ├── themes.js              # Theme definitions, CSS variables & typography tokens
 │   ├── content.js             # On-page text selection & floating capture pill
 │   ├── content.css            # Floating pill & notification styles
 │   ├── background.js          # Service worker & context menus
 │   └── icons/                 # Crisp vector-generated extension icons
 ├── backend/                   # Python FastAPI Service
 │   ├── main.py                # REST API endpoints (/compare, /health, /demos)
-│   ├── models.py              # Pydantic schemas
-│   ├── analyzer.py            # AI engine (OpenAI / Gemini / Claude / Heuristic Fallback)
-│   ├── requirements.txt       # Minimal dependencies (FastAPI, Uvicorn, Pydantic, Pytest)
-│   ├── test_main.py           # Backend automated test suite (9 test cases)
-│   └── .env.example           # Environment template
-├── test_pages/                # Interactive Hackathon Demo Articles
+│   ├── models.py              # Pydantic schemas with normalization & error handling
+│   ├── analyzer.py            # Orchestration pipeline (AI + Heuristic Fallback)
+│   ├── llm_provider.py        # Multi-provider LLM abstraction (Gemini / OpenAI / Claude)
+│   ├── guardrails.py          # AI safety, anti-hallucination & injection defenses
+│   ├── source_search.py       # Web search integration (SerpAPI / Brave / DuckDuckGo)
+│   ├── source_evaluator.py    # Source relevance, credibility, and stance scoring
+│   ├── requirements.txt       # Dependencies (FastAPI, Uvicorn, Pydantic, HTTPX, Pytest)
+│   ├── test_main.py           # 24-scenario automated test suite
+│   ├── test_theme_system.py   # Theme system verification tests
+│   └── .env.example           # Environment template for API keys
+├── test_pages/                # Interactive Demo Articles
 │   ├── article_a.html         # TechNews Daily (Claims keynote is Friday)
 │   └── article_b.html         # EventHub Official (Confirms keynote is Saturday)
 ├── pytest.ini                 # Pytest configuration
@@ -108,10 +147,14 @@ Open your terminal in the `contextlens` folder and run:
 
 *This will automatically create a Python virtual environment (`venv`), install dependencies, and start the FastAPI server at `http://localhost:8000`.*
 
-You can view the interactive Swagger API documentation at:
-**[http://localhost:8000/docs](http://localhost:8000/docs)**
+### Local AI Setup (No API Keys Needed):
+Run Qwen locally with [Ollama](https://ollama.com):
+```bash
+ollama run qwen2.5
+```
+By default, ContextLens connects directly to `http://localhost:11434` with model `qwen2.5:latest` (or configured `LOCAL_MODEL`), requiring zero API keys and offering 100% private, offline semantic reasoning with safety guardrails!
 
-*(Optional: To use live LLM models, copy `backend/.env.example` to `backend/.env` and add your `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`. If left blank, ContextLens's built-in offline engine runs automatically!)*
+*(Optional: Cloud providers like Google Gemini (`GEMINI_API_KEY`), OpenAI (`OPENAI_API_KEY`), or Anthropic Claude (`ANTHROPIC_API_KEY`) can be configured in `backend/.env`. If left blank or offline, ContextLens's built-in offline engine runs automatically!).*
 
 ---
 

@@ -191,6 +191,7 @@
             <div id="badge-label" class="badge-label">ANALYZING...</div>
             <div id="badge-sub" class="badge-sub">Evidence-based contextual relationship</div>
           </div>
+          <div id="engine-badge" class="engine-badge hidden"></div>
         </div>
 
         <!-- Evidence-First Source Cards (Feature 4) -->
@@ -218,6 +219,37 @@
         <div class="result-card">
           <div class="result-card-title">Analysis Summary</div>
           <p id="result-explanation" class="result-explanation-text"></p>
+        </div>
+
+        <!-- Confidence Indicator -->
+        <div id="confidence-card" class="result-card confidence-card hidden">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Confidence
+          </div>
+          <div class="confidence-bar-container">
+            <div class="confidence-bar"><div id="confidence-fill" class="confidence-fill"></div></div>
+            <span id="confidence-pct" class="confidence-pct">—</span>
+          </div>
+          <p id="confidence-reason" class="confidence-reason-text"></p>
+        </div>
+
+        <!-- Supporting Points -->
+        <div id="supporting-card" class="result-card supporting-card hidden">
+          <div class="result-card-title supporting-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Supporting Evidence
+          </div>
+          <ul id="result-supporting" class="result-list"></ul>
+        </div>
+
+        <!-- Contradicting Points -->
+        <div id="contradicting-card" class="result-card contradicting-card hidden">
+          <div class="result-card-title contradicting-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Contradicting Evidence
+          </div>
+          <ul id="result-contradicting" class="result-list"></ul>
         </div>
 
         <!-- Key Differences -->
@@ -260,6 +292,25 @@
               <span id="result-domain-b" class="source-domain">Open source</span>
             </a>
           </div>
+        </div>
+
+        <!-- Additional Sources (from search) -->
+        <div id="additional-sources-card" class="result-card additional-sources-card hidden">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Additional Sources Discovered
+          </div>
+          <p class="sources-note">Independent sources found by ContextLens. Relevance is AI-assessed from search snippets only — not verified full-article retrieval.</p>
+          <div id="additional-sources-list"></div>
+        </div>
+
+        <!-- Limitations -->
+        <div id="limitations-card" class="result-card limitations-card hidden">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Analysis Limitations
+          </div>
+          <ul id="result-limitations" class="result-list limitations-list"></ul>
         </div>
 
         <div class="results-footer">
