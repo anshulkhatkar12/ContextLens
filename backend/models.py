@@ -27,16 +27,21 @@ class ClaimItem(BaseModel):
     """A single text passage with optional source metadata."""
     model_config = ConfigDict(extra="ignore")
 
-    text: str = Field(..., description="The selected text passage")
+    text: str = Field(default="", description="The selected text passage")
     title: Optional[str] = Field(default="Untitled Source", description="Webpage or document title")
     url: Optional[str] = Field(default="", description="Source URL")
 
-    @field_validator("text", mode="before")
-    @classmethod
-    def validate_text_not_empty(cls, v: Any) -> str:
+    @field_validator("title", mode="before")
+    def default_title_if_none(cls, v: Optional[str]) -> str:
         if v is None or not str(v).strip():
-            raise ValueError("Passage text cannot be empty.")
-        return str(v)
+            return "Untitled Source"
+        return str(v).strip()
+
+    @field_validator("url", mode="before")
+    def default_url_if_none(cls, v: Optional[str]) -> str:
+        if v is None:
+            return ""
+        return str(v).strip()
 
 
 class CompareRequest(BaseModel):
@@ -44,7 +49,9 @@ class CompareRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     claim_a: ClaimItem
-    claim_b: ClaimItem
+    claim_b: Optional[ClaimItem] = Field(default=None, description="Secondary passage or evidence")
+    include_search: bool = Field(default=False, description="Whether to discover additional web sources")
+    max_search_results: int = Field(default=3, ge=1, le=10, description="Max search sources to retrieve")
 
 
 # ---------------------------------------------------------------------------
@@ -59,7 +66,7 @@ class AdditionalSource(BaseModel):
     """A source discovered during external search."""
     model_config = ConfigDict(extra="ignore")
 
-    title: str = Field(..., description="Title of the source")
+    title: str = Field(default="Untitled Source", description="Title of the source")
     url: str = Field(..., description="URL of the source")
     publisher: Optional[str] = Field(default=None, description="Publisher or domain name")
     published_date: Optional[str] = Field(default=None, description="Publication date if known")
@@ -79,14 +86,47 @@ class AdditionalSource(BaseModel):
         default=None,
         description="Snippet from the source (only when actually retrieved)"
     )
+    snippet: Optional[str] = Field(
+        default="",
+        description="Snippet alias"
+    )
+    content_type: str = Field(
+        default="snippet",
+        description="Distinguishes 'snippet' from 'full_page'"
+    )
+    is_relevant: bool = Field(
+        default=True,
+        description="Whether this source contains evidence for the claim"
+    )
+    relevance_score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Relevance score between 0 and 1"
+    )
+    verified_claim: Optional[str] = Field(
+        default=None,
+        description="What specific fact was verified by this source"
+    )
     limitations: Optional[str] = Field(
         default=None,
         description="Known limitations of this source's coverage or methodology"
     )
     retrieval_status: RetrievalStatusType = Field(
-        default="search_result_only",
+        default="snippet_only",
         description="What level of content was actually obtained"
     )
+
+    def model_post_init(self, context: Any) -> None:
+        super().model_post_init(context)
+        if not self.snippet and self.supporting_excerpt:
+            self.snippet = self.supporting_excerpt
+        elif not self.supporting_excerpt and self.snippet:
+            self.supporting_excerpt = self.snippet
+        if not self.relevance_reason and self.verified_claim:
+            self.relevance_reason = self.verified_claim
+        elif not self.verified_claim and self.relevance_reason:
+            self.verified_claim = self.relevance_reason
 
     @field_validator("relationship_to_claim", mode="before")
     @classmethod
@@ -112,9 +152,13 @@ class AdditionalSource(BaseModel):
             return s
         if "snippet" in s:
             return "snippet_only"
-        if "retriev" in s:
+        if "retriev" in s or "page" in s:
             return "retrieved"
         return "search_result_only"
+
+
+# Alias for backward and forward compatibility
+SourceItem = AdditionalSource
 
 
 # ---------------------------------------------------------------------------
@@ -182,6 +226,14 @@ class CompareResponse(BaseModel):
         default="",
         description="What the evidence passage states and whether it addresses the claim"
     )
+    interpretation_a: str = Field(
+        default="",
+        description="Alias for claim_interpretation"
+    )
+    interpretation_b: str = Field(
+        default="",
+        description="Alias for evidence_interpretation"
+    )
 
     # Structured findings
     key_differences: List[str] = Field(
@@ -196,6 +248,14 @@ class CompareResponse(BaseModel):
         default_factory=list,
         description="Specific quotes or paraphrases from evidence that contradict the claim"
     )
+    supporting_evidence: List[str] = Field(
+        default_factory=list,
+        description="Alias for supporting_points"
+    )
+    contradicting_evidence: List[str] = Field(
+        default_factory=list,
+        description="Alias for contradicting_points"
+    )
     missing_context: List[str] = Field(
         default_factory=list,
         description="Contextual elements that would clarify the relationship"
@@ -207,7 +267,7 @@ class CompareResponse(BaseModel):
 
     # Confidence
     confidence: Optional[float] = Field(
-        default=None,
+        default=0.85,
         ge=0.0,
         le=1.0,
         description="Model-estimated confidence 0–1 (not a calibrated probability)"
@@ -215,6 +275,10 @@ class CompareResponse(BaseModel):
     confidence_reason: str = Field(
         default="",
         description="Explanation of the main sources of uncertainty"
+    )
+    confidence_justification: str = Field(
+        default="",
+        description="Alias for confidence_reason"
     )
 
     # Limitations
@@ -232,6 +296,10 @@ class CompareResponse(BaseModel):
         default_factory=list,
         description="Source references from the supplied passages"
     )
+    source_attribution: Optional[str] = Field(
+        default=None,
+        description="Primary attribution note or authority"
+    )
 
     # Additional discovered sources
     additional_sources: List[AdditionalSource] = Field(
@@ -243,6 +311,10 @@ class CompareResponse(BaseModel):
     engine: str = Field(
         default="heuristic",
         description="Which engine produced this result: llm, heuristic, or error"
+    )
+    is_heuristic_fallback: bool = Field(
+        default=False,
+        description="True if produced by fallback heuristic engine rather than live AI"
     )
 
     # Guardrails metadata
@@ -296,20 +368,58 @@ class CompareResponse(BaseModel):
             return None
         try:
             val = float(v)
-            # If provided as percentage > 1.0 (e.g. 85), scale down
             if val > 1.0 and val <= 100.0:
                 val = val / 100.0
             return max(0.0, min(1.0, val))
         except (ValueError, TypeError):
             return None
 
+    @field_validator(
+        "key_differences", "missing_context", "verification_questions",
+        "supporting_points", "contradicting_points", "supporting_evidence",
+        "contradicting_evidence", "limitations", "additional_sources",
+        "source_references", "guardrails_applied", "guardrail_warnings",
+        mode="before"
+    )
+    def ensure_list_not_none(cls, v: Any) -> list:
+        if v is None:
+            return []
+        if isinstance(v, list):
+            return v
+        return [v]
+
     def model_post_init(self, context: Any) -> None:
-        """Sync legacy fields with new canonical fields."""
+        """Sync legacy and new canonical fields bidirectionally."""
         super().model_post_init(context)
         if not self.analysis_summary and self.explanation:
             self.analysis_summary = self.explanation
         elif not self.explanation and self.analysis_summary:
             self.explanation = self.analysis_summary
+
+        if not self.interpretation_a and self.claim_interpretation:
+            self.interpretation_a = self.claim_interpretation
+        elif not self.claim_interpretation and self.interpretation_a:
+            self.claim_interpretation = self.interpretation_a
+
+        if not self.interpretation_b and self.evidence_interpretation:
+            self.interpretation_b = self.evidence_interpretation
+        elif not self.evidence_interpretation and self.interpretation_b:
+            self.evidence_interpretation = self.interpretation_b
+
+        if not self.supporting_evidence and self.supporting_points:
+            self.supporting_evidence = self.supporting_points
+        elif not self.supporting_points and self.supporting_evidence:
+            self.supporting_points = self.supporting_evidence
+
+        if not self.contradicting_evidence and self.contradicting_points:
+            self.contradicting_evidence = self.contradicting_points
+        elif not self.contradicting_points and self.contradicting_evidence:
+            self.contradicting_points = self.contradicting_evidence
+
+        if not self.confidence_justification and self.confidence_reason:
+            self.confidence_justification = self.confidence_reason
+        elif not self.confidence_reason and self.confidence_justification:
+            self.confidence_reason = self.confidence_justification
 
 
 # ---------------------------------------------------------------------------

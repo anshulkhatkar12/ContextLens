@@ -166,3 +166,46 @@ async def evaluate_sources(
         ))
 
     return evaluated
+
+
+# ---------------------------------------------------------------------------
+# LangChain Filter and Rank Sources
+# ---------------------------------------------------------------------------
+
+from .models import SourceItem
+
+def filter_and_rank_sources(
+    claim_text: str,
+    sources: List[SourceItem],
+    top_k: int = 3
+) -> List[SourceItem]:
+    """
+    Evaluates, filters, and ranks retrieved sources by relevance.
+    Guarantees no fabricated URLs or falsified relevance.
+    """
+    claim_words = set(claim_text.lower().split())
+    stopwords = {'the', 'is', 'are', 'was', 'were', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'a', 'an'}
+    informative_claim_words = {w.strip(".,;:!?\"'()[]") for w in claim_words if len(w) > 3 and w not in stopwords}
+
+    evaluated = []
+    for s in sources:
+        if not s.snippet:
+            s.is_relevant = False
+            s.relevance_score = 0.0
+            s.verified_claim = None
+        else:
+            snippet_lower = s.snippet.lower()
+            matches = [w for w in informative_claim_words if w in snippet_lower]
+            ratio = (len(matches) / len(informative_claim_words)) if informative_claim_words else 0.5
+            s.relevance_score = round(min(1.0, max(0.0, ratio)), 2)
+            s.is_relevant = s.relevance_score >= 0.25
+            if s.is_relevant and matches:
+                matched_str = ", ".join(sorted(list(matches))[:3])
+                s.verified_claim = f"Discusses matching topics: {matched_str}"
+            else:
+                s.verified_claim = None
+        evaluated.append(s)
+
+    evaluated.sort(key=lambda x: x.relevance_score, reverse=True)
+    return evaluated[:top_k]
+

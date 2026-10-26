@@ -582,7 +582,9 @@ const DENSITY_TOKENS = {
     "--density-padding-md": "8px",
     "--density-padding-lg": "12px",
     "--density-gap": "8px",
-    "--density-card-padding": "10px 12px"
+    "--density-card-padding-y": "10px",
+    "--density-card-padding-x": "12px",
+    "--density-tab-padding": "10px"
   },
   comfortable: {
     "--density-padding-xs": "4px",
@@ -590,7 +592,9 @@ const DENSITY_TOKENS = {
     "--density-padding-md": "12px",
     "--density-padding-lg": "16px",
     "--density-gap": "12px",
-    "--density-card-padding": "12px 14px"
+    "--density-card-padding-y": "12px",
+    "--density-card-padding-x": "14px",
+    "--density-tab-padding": "14px"
   },
   spacious: {
     "--density-padding-xs": "6px",
@@ -598,7 +602,9 @@ const DENSITY_TOKENS = {
     "--density-padding-md": "16px",
     "--density-padding-lg": "24px",
     "--density-gap": "18px",
-    "--density-card-padding": "16px 20px"
+    "--density-card-padding-y": "16px",
+    "--density-card-padding-x": "20px",
+    "--density-tab-padding": "20px"
   }
 };
 
@@ -670,14 +676,21 @@ function applyTypography(typography = {}) {
   const { fontFamily = "system", fontSize = 13, lineHeight = 1.5, fontWeight = "normal" } = typography;
 
   const fontStack = FONT_FAMILIES[fontFamily] || FONT_FAMILIES.system;
-  root.style.setProperty("--font-family", fontStack);
-  root.style.setProperty("--font-size-base", `${Math.min(22, Math.max(10, fontSize))}px`);
-  root.style.setProperty("--line-height-base", `${lineHeight}`);
-  root.style.setProperty("--font-weight-base", fontWeight === "medium" ? "500" : "400");
+  const clampedSize = Math.min(22, Math.max(10, fontSize));
+  const weightVal = fontWeight === "medium" ? "500" : "400";
 
+  // Set CSS custom properties (used by var() references in stylesheets)
+  root.style.setProperty("--font-family", fontStack);
+  root.style.setProperty("--font-size-base", `${clampedSize}px`);
+  root.style.setProperty("--line-height-base", `${lineHeight}`);
+  root.style.setProperty("--font-weight-base", weightVal);
+
+  // Set directly on body so CSS inheritance propagates to inputs/buttons
+  // (they now use font-size: inherit; font-weight: inherit in sidepanel.css)
   document.body.style.fontFamily = fontStack;
-  document.body.style.fontSize = `${Math.min(22, Math.max(10, fontSize))}px`;
+  document.body.style.fontSize = `${clampedSize}px`;
   document.body.style.lineHeight = `${lineHeight}`;
+  document.body.style.fontWeight = weightVal;
 }
 
 function applyReducedMotion(enabled = false) {

@@ -713,11 +713,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Engine badge
     if (engineBadge) {
-      if (result.engine === "heuristic") {
+      if (result.engine === "heuristic" || result.is_heuristic_fallback) {
         engineBadge.textContent = "⚙️ Heuristic";
         engineBadge.className = "engine-badge engine-heuristic";
         engineBadge.classList.remove("hidden");
-      } else if (result.engine === "llm") {
+      } else if (result.engine === "llm" || !result.is_heuristic_fallback) {
         engineBadge.textContent = "🤖 AI";
         engineBadge.className = "engine-badge engine-llm";
         engineBadge.classList.remove("hidden");
@@ -877,9 +877,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function renderAdditionalSources(sources) {
+    const extraSources = Array.isArray(sources) ? sources : [];
+
+    // Fallback: append extra sources to source-links-grid if present
+    const sourceLinksGrid = document.querySelector(".source-links-grid");
+    if (sourceLinksGrid) {
+      const existingExtra = sourceLinksGrid.querySelectorAll(".extra-source-link");
+      existingExtra.forEach(el => el.remove());
+
+      extraSources.forEach((src, idx) => {
+        if (src.url && src.url !== (state.claimA.url || "") && src.url !== (state.claimB.url || "")) {
+          const a = document.createElement("a");
+          a.className = "source-link-btn extra-source-link";
+          a.href = src.url;
+          a.target = "_blank";
+          const domain = formatUrlDomain(src.url);
+          const typeBadge = src.content_type === "full_page" ? " [Full Page]" : " [Snippet]";
+          a.innerHTML = `<span>🌐 Source ${idx + 1}: ${escapeHtml(src.title || domain)}${typeBadge}</span><span class="source-domain">${domain}</span>`;
+          sourceLinksGrid.appendChild(a);
+        }
+      });
+    }
+
     if (!additionalSourcesCard || !additionalSourcesList) return;
 
-    if (!Array.isArray(sources) || sources.length === 0) {
+    if (extraSources.length === 0) {
       additionalSourcesCard.classList.add("hidden");
       return;
     }
@@ -893,11 +915,11 @@ document.addEventListener("DOMContentLoaded", () => {
       unclear:        { cls: "rel-unclear",      icon: "❓", label: "Unclear" },
     };
 
-    sources.forEach((src) => {
+    extraSources.forEach((src) => {
       const rel = relConfig[src.relationship_to_claim] || relConfig.unclear;
       const statusLabel = src.retrieval_status === "snippet_only" ? "Snippet" :
                           src.retrieval_status === "retrieved" ? "Retrieved" :
-                          "Search result only";
+                          src.content_type === "full_page" ? "Full Page" : "Snippet";
 
       // Validate URL before rendering as clickable link
       let safeUrl = "#";
@@ -919,8 +941,8 @@ document.addEventListener("DOMContentLoaded", () => {
           ${escapeHtml(src.title || src.url)}
         </a>
         ${src.publisher ? `<div class="source-item-publisher">${escapeHtml(src.publisher)}${src.published_date ? " · " + escapeHtml(src.published_date) : ""}</div>` : ""}
-        ${src.relevance_reason ? `<div class="source-item-relevance">${escapeHtml(src.relevance_reason)}</div>` : ""}
-        ${src.supporting_excerpt ? `<blockquote class="source-item-excerpt">${escapeHtml(src.supporting_excerpt.substring(0, 250))}${src.supporting_excerpt.length > 250 ? "…" : ""}</blockquote>` : ""}
+        ${src.relevance_reason || src.verified_claim ? `<div class="source-item-relevance">${escapeHtml(src.relevance_reason || src.verified_claim || "")}</div>` : ""}
+        ${src.supporting_excerpt || src.snippet ? `<blockquote class="source-item-excerpt">${escapeHtml((src.supporting_excerpt || src.snippet || "").substring(0, 250))}${src.supporting_excerpt && src.supporting_excerpt.length > 250 ? "…" : ""}</blockquote>` : ""}
         ${src.limitations ? `<div class="source-item-limitations">⚠ ${escapeHtml(src.limitations)}</div>` : ""}
       `;
       additionalSourcesList.appendChild(card);
