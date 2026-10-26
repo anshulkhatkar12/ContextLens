@@ -1,0 +1,119 @@
+/* ContextLens Floating Action Pill & Toast Styles */
+
+#contextlens-floating-pill {
+  position: absolute;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(139, 92, 246, 0.2);
+  border-radius: 9999px;
+  padding: 4px 8px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #f1f5f9;
+  user-select: none;
+  animation: contextlensFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes contextlensFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.contextlens-pill-brand {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  color: #a78bfa;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+}
+
+.contextlens-pill-btn {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  padding: 4px 8px;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.contextlens-pill-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  color: #ffffff;
+}
+
+.contextlens-pill-btn.btn-claim:hover {
+  background: rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
+}
+
+.contextlens-pill-btn.btn-evidence:hover {
+  background: rgba(56, 189, 248, 0.3);
+  color: #7dd3fc;
+}
+
+/* On-Page Toast Notification */
+#contextlens-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2147483647;
+  pointer-events: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.contextlens-toast {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-left: 4px solid #8b5cf6;
+  color: #f8fafc;
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: contextlensToastSlide 3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes contextlensToastSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  10%, 80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}

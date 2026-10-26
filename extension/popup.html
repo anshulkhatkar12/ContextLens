@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextLens</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <style>
+    /* Specific overrides for popup view */
+    body {
+      width: 440px;
+      min-height: 560px;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="11" r="6" stroke="url(#lens-grad-1)" stroke-width="2.5"/>
+            <circle cx="15" cy="13" r="6" stroke="url(#lens-grad-2)" stroke-width="2.5"/>
+            <defs>
+              <linearGradient id="lens-grad-1" x1="3" y1="5" x2="15" y2="17" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#8B5CF6"/>
+                <stop offset="1" stop-color="#38BDF8"/>
+              </linearGradient>
+              <linearGradient id="lens-grad-2" x1="9" y1="7" x2="21" y2="19" gradientUnits="userSpaceOnUse">
+                <stop stop-color="#38BDF8"/>
+                <stop offset="1" stop-color="#8B5CF6"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">ContextLens</span>
+          <span class="brand-tagline">Evidence before conclusions</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-open-tab" class="icon-btn" title="Open full dashboard tab">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="compare">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        Compare
+      </button>
+      <button class="nav-tab" data-tab="demos">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Demos
+      </button>
+      <button class="nav-tab" data-tab="history">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History <span id="history-badge" class="badge-count">0</span>
+      </button>
+      <button class="nav-tab" data-tab="settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </nav>
+
+    <!-- TAB 1: COMPARE WORKSPACE -->
+    <main id="tab-compare" class="tab-content active">
+      <div id="quick-hint" class="quick-hint">
+        <div class="hint-icon">💡</div>
+        <div class="hint-text">
+          Select text on any webpage to capture with the <strong>ContextLens</strong> floating pill, or use the capture buttons below.
+        </div>
+        <button id="btn-dismiss-hint" class="btn-dismiss">&times;</button>
+      </div>
+
+      <!-- Source A Card (Claim) -->
+      <section class="source-card card-a">
+        <div class="card-header">
+          <div class="card-tag tag-a">SOURCE A &bull; CLAIM</div>
+          <div class="card-actions">
+            <button id="btn-capture-a" class="btn-action-sm" title="Capture selected text on current webpage">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Capture Tab Selection
+            </button>
+            <button id="btn-clear-a" class="icon-btn-danger" title="Clear Claim A">&times;</button>
+          </div>
+        </div>
+
+        <div id="meta-a" class="source-meta hidden">
+          <div class="meta-title" id="title-a">Untitled Page</div>
+          <a id="link-a" href="#" target="_blank" class="meta-url">source link</a>
+        </div>
+
+        <div class="card-body">
+          <textarea id="text-a" class="passage-input" placeholder="Select text on webpage A and capture, or paste statement here..." rows="3"></textarea>
+        </div>
+      </section>
+
+      <!-- Center Swap / Quick Action Divider -->
+      <div class="passage-divider">
+        <button id="btn-swap" class="btn-swap" title="Swap Claim A and Evidence B">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><polyline points="17 14 12 9 7 14"/><line x1="12" y1="9" x2="12" y2="21"/></svg>
+          Swap
+        </button>
+      </div>
+
+      <!-- Source B Card (Evidence) -->
+      <section class="source-card card-b">
+        <div class="card-header">
+          <div class="card-tag tag-b">SOURCE B &bull; EVIDENCE</div>
+          <div class="card-actions">
+            <button id="btn-capture-b" class="btn-action-sm" title="Capture selected text on current webpage">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Capture Tab Selection
+            </button>
+            <button id="btn-clear-b" class="icon-btn-danger" title="Clear Evidence B">&times;</button>
+          </div>
+        </div>
+
+        <div id="meta-b" class="source-meta hidden">
+          <div class="meta-title" id="title-b">Untitled Page</div>
+          <a id="link-b" href="#" target="_blank" class="meta-url">source link</a>
+        </div>
+
+        <div class="card-body">
+          <textarea id="text-b" class="passage-input" placeholder="Select text on webpage B and capture, or paste comparison evidence here..." rows="3"></textarea>
+        </div>
+      </section>
+
+      <!-- Comparison Controls -->
+      <div class="compare-controls">
+        <button id="btn-compare" class="btn-primary-compare">
+          <span class="btn-spinner hidden" id="compare-spinner"></span>
+          <span class="btn-text" id="compare-btn-text">⚡ Compare with ContextLens</span>
+        </button>
+        <button id="btn-reset-all" class="btn-secondary" title="Reset workspace">Clear</button>
+      </div>
+
+      <!-- Error / Notice Box -->
+      <div id="compare-error" class="error-box hidden">
+        <div class="error-icon">⚠️</div>
+        <div class="error-content">
+          <div id="error-title" class="error-title">Analysis Failed</div>
+          <div id="error-msg" class="error-msg">Please check your inputs and backend connection.</div>
+        </div>
+        <button id="btn-error-retry" class="btn-error-action">Retry</button>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <section id="results-section" class="results-container hidden">
+        <div class="results-header">
+          <h2 class="results-heading">Comparative Analysis</h2>
+          <div class="results-tools">
+            <button id="btn-copy-report" class="btn-tool" title="Copy markdown summary">📋 Copy</button>
+            <button id="btn-save-history" class="btn-tool" title="Save to History">💾 Saved</button>
+          </div>
+        </div>
+
+        <div id="classification-badge" class="classification-badge badge-neutral">
+          <span id="badge-icon" class="badge-icon">🔍</span>
+          <div class="badge-body">
+            <div id="badge-label" class="badge-label">ANALYZING...</div>
+            <div id="badge-sub" class="badge-sub">Evidence-based contextual relationship</div>
+          </div>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-title">Analysis Summary</div>
+          <p id="result-explanation" class="result-explanation-text"></p>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Key Differences
+          </div>
+          <ul id="result-differences" class="result-list"></ul>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Missing Context to Verify
+          </div>
+          <ul id="result-missing" class="result-list"></ul>
+        </div>
+
+        <div class="result-card">
+          <div class="result-card-title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            Suggested Verification Questions
+          </div>
+          <ul id="result-questions" class="result-list questions-list"></ul>
+        </div>
+
+        <div class="result-card source-verify-card">
+          <div class="result-card-title">Source References</div>
+          <div class="source-links-grid">
+            <a id="result-source-a" href="#" target="_blank" class="source-link-btn">
+              <span>🔗 Source A:</span>
+              <span id="result-domain-a" class="source-domain">Open source</span>
+            </a>
+            <a id="result-source-b" href="#" target="_blank" class="source-link-btn">
+              <span>🔗 Source B:</span>
+              <span id="result-domain-b" class="source-domain">Open source</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="results-footer">
+          <p class="disclaimer-note">
+            ⚠️ <em>ContextLens assists your investigation. It highlights context differences and does not make definitive truth declarations.</em>
+          </p>
+          <button id="btn-new-comparison" class="btn-secondary-full">Start Another Comparison</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- TAB 2: DEMONSTRATION MODE -->
+    <section id="tab-demos" class="tab-content">
+      <div class="tab-header">
+        <h2 class="tab-title">Demonstration Scenarios</h2>
+        <p class="tab-subtitle">Three curated examples demonstrating how ContextLens identifies context nuances. These work offline without an API key.</p>
+      </div>
+
+      <div class="demo-card" data-demo="a">
+        <div class="demo-badge badge-contradiction">Scenario A: Possible Contradiction</div>
+        <h3 class="demo-title">Conference Date Discrepancy</h3>
+        <p class="demo-desc">Two sources give mutually exclusive dates for the same keynote event.</p>
+        <div class="demo-preview">
+          <div class="demo-pass"><strong>Claim A:</strong> "DevSummit keynote takes place on Friday, Nov 14."</div>
+          <div class="demo-pass"><strong>Evidence B:</strong> "All main talks and keynote are confirmed for Saturday, Nov 15."</div>
+        </div>
+        <button class="btn-load-demo" data-scenario="contradiction">Load &amp; Compare Scenario A &rarr;</button>
+      </div>
+
+      <div class="demo-card" data-demo="b">
+        <div class="demo-badge badge-context">Scenario B: Different Context</div>
+        <h3 class="demo-title">Base Price vs. Final Invoice</h3>
+        <p class="demo-desc">Passages report different prices for the same laptop due to excluded taxes & shipping fees.</p>
+        <div class="demo-preview">
+          <div class="demo-pass"><strong>Claim A:</strong> "The ZenBook Ultra is priced starting at $499."</div>
+          <div class="demo-pass"><strong>Evidence B:</strong> "The total order came to $549 for the ZenBook Ultra at checkout."</div>
+        </div>
+        <button class="btn-load-demo" data-scenario="different_context">Load &amp; Compare Scenario B &rarr;</button>
+      </div>
+
+      <div class="demo-card" data-demo="c">
+        <div class="demo-badge badge-insufficient">Scenario C: Insufficient Context</div>
+        <h3 class="demo-title">Conflicting Youth Employment Stats</h3>
+        <p class="demo-desc">Opposite employment trends without specifying year, region, or age group.</p>
+        <div class="demo-preview">
+          <div class="demo-pass"><strong>Claim A:</strong> "Youth unemployment increased by 3.8% reaching record levels."</div>
+          <div class="demo-pass"><strong>Evidence B:</strong> "Youth joblessness reached an all-time low of 7.2%."</div>
+        </div>
+        <button class="btn-load-demo" data-scenario="insufficient_context">Load &amp; Compare Scenario C &rarr;</button>
+      </div>
+
+      <div class="demo-note">
+        <em>Note: Predefined scenarios are fictional examples created for hackathon demonstration.</em>
+      </div>
+    </section>
+
+    <!-- TAB 3: RESEARCH HISTORY -->
+    <section id="tab-history" class="tab-content">
+      <div class="tab-header">
+        <div class="history-header-row">
+          <h2 class="tab-title">Research History</h2>
+          <button id="btn-clear-history" class="btn-text-danger">Clear All</button>
+        </div>
+        <div class="search-box">
+          <input type="text" id="history-search" placeholder="Search claims or topics..." class="search-input">
+        </div>
+      </div>
+
+      <div id="history-list" class="history-list"></div>
+
+      <div id="history-empty" class="empty-state">
+        <div class="empty-icon">📁</div>
+        <div class="empty-text">No saved comparisons yet.</div>
+        <div class="empty-sub">Your analyzed comparisons will automatically appear here.</div>
+      </div>
+    </section>
+
+    <!-- TAB 4: SETTINGS & PRIVACY -->
+    <section id="tab-settings" class="tab-content">
+      <div class="tab-header">
+        <h2 class="tab-title">Settings &amp; Architecture</h2>
+        <p class="tab-subtitle">Configure backend and review privacy principles.</p>
+      </div>
+
+      <div class="settings-group">
+        <label class="settings-label" for="setting-backend-url">Backend Server URL</label>
+        <div class="input-with-button">
+          <input type="text" id="setting-backend-url" class="settings-input" value="http://localhost:8000" placeholder="http://localhost:8000">
+          <button id="btn-test-backend" class="btn-action-sm">Test</button>
+        </div>
+        <div id="backend-status-msg" class="status-indicator status-unknown">Status: Checking...</div>
+      </div>
+
+      <div class="settings-group">
+        <label class="settings-label" for="setting-api-key">LLM API Key (Optional Override)</label>
+        <input type="password" id="setting-api-key" class="settings-input" placeholder="Stored on backend or local session">
+        <p class="settings-hint">API keys are securely kept in backend .env. If left blank, the backend handles LLM calls or built-in heuristic analysis.</p>
+      </div>
+
+      <div class="settings-card">
+        <div class="card-subtitle">🔒 Privacy by Design</div>
+        <ul class="privacy-list">
+          <li><strong>Zero passive tracking:</strong> ContextLens never records browsing history.</li>
+          <li><strong>Explicit user intent:</strong> Text is only captured when you click capture or the floating pill.</li>
+          <li><strong>Local storage first:</strong> All drafts and research history reside on your local machine.</li>
+          <li><strong>Evidence before conclusions:</strong> AI outputs are investigative suggestions, not absolute verdicts.</li>
+        </ul>
+      </div>
+
+      <div class="settings-footer">
+        <button id="btn-save-settings" class="btn-primary-sm">Save Preferences</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
