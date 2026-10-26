@@ -413,10 +413,11 @@ async def analyze_passages(
         source_refs.append(f"Source A — {claim_a.title or 'Untitled'}: {claim_a.url}")
     if claim_b.url:
         source_refs.append(f"Source B — {claim_b.title or 'Untitled'}: {claim_b.url}")
-    object.__setattr__(analysis, "source_references", source_refs)
+    analysis.source_references = source_refs
 
     # --- Steps 2–5: Source Discovery and Evaluation ---
     additional_sources: List[AdditionalSource] = []
+    search_error: Optional[str] = None
 
     if ENABLE_SOURCE_SEARCH:
         try:
@@ -448,12 +449,12 @@ async def analyze_passages(
             logger.warning("Source discovery pipeline failed: %s", exc)
             search_error = f"Source discovery encountered an error: {exc}"
 
-    object.__setattr__(analysis, "additional_sources", additional_sources)
+    analysis.additional_sources = additional_sources
 
     # Append search error to limitations if applicable
     if search_error:
         current_limitations = list(analysis.limitations or [])
         current_limitations.append(search_error)
-        object.__setattr__(analysis, "limitations", current_limitations)
+        analysis.limitations = current_limitations
 
     return analysis

@@ -29,34 +29,34 @@ ContextLens never automatically declares a source false. Instead, it exposes the
    - **Active Tab Grab:** Click "Capture Tab Selection" directly in the extension.
 
 2. **Evidence-First AI Comparative Analysis:**
-   - Evaluates both passages and classifies their relationship into 4 standard categories:
-     - ⚠️ **POSSIBLE CONTRADICTION:** Incompatible claims about the same subject under comparable conditions.
-     - ✅ **CONSISTENT:** Passages support similar conclusions or compatible facts.
-     - ⏱️ **DIFFERENT CONTEXT:** Variations due to dates, pricing scope, definitions, or updates.
-     - ❓ **INSUFFICIENT CONTEXT:** Lacks essential geographic boundaries, dates, or population details.
+   - Evaluates both passages and classifies their relationship into 6 rich semantic categories:
+     - ✅ **SUPPORTED:** The evidence directly supports the claim under comparable conditions.
+     - ⚠️ **CONTRADICTED:** Reliable evidence directly conflicts with the claim.
+     - 🔶 **PARTIALLY SUPPORTED:** Some aspects are established, but the full scope is not verified.
+     - ⏱️ **DIFFERENT CONTEXT:** Statements differ due to dates, scope, definitions, or methods.
+     - ❓ **INSUFFICIENT EVIDENCE:** The available evidence does not justify a factual conclusion.
+     - 🔗 **UNRELATED:** The evidence does not meaningfully address the claim.
 
-3. **Structured Research Output:**
-   - **Executive Summary:** Plain-language synthesis.
-   - **Key Differences:** Specific factual divergences itemized as bullets.
-   - **Missing Context:** Exactly what parameters need to be verified.
-   - **Suggested Verification Questions:** Actionable follow-up questions for the researcher.
-   - **Source Links:** Direct backlinks to open and verify the original webpage.
+3. **External Source Discovery & Credibility Evaluation:**
+   - Automatically identifies unanswered questions and generates targeted web queries.
+   - Discovers independent sources via SerpAPI, Brave Search, or DuckDuckGo fallback.
+   - Evaluates domain authority, source type, and directional stance without fabricating citations.
 
-4. **1-Click Demonstration Mode (Offline Ready):**
-   - 3 pre-configured scenarios ready to showcase in presentations:
-     - **Scenario A:** Possible Contradiction (Conference date: Friday vs. Saturday).
-     - **Scenario B:** Different Context (Product price: Base MSRP $499 vs. Checkout $549).
-     - **Scenario C:** Insufficient Context (Opposing youth employment statistics).
-   - Functions 100% offline with zero dependencies or API keys needed.
+4. **Structured Research Output:**
+   - **Executive Summary:** Plain-language synthesis grounded in the passages.
+   - **Confidence Score & Reason:** Transparent uncertainty estimation with limitations.
+   - **Supporting & Contradicting Evidence:** Explicit excerpt breakdown.
+   - **Key Differences & Missing Context:** Factual divergences and parameters to investigate.
+   - **Suggested Verification Questions:** Actionable follow-up queries.
+   - **Discovered Sources:** Independent links with AI relevance assessments.
 
-5. **Local Research History:**
+5. **Multi-Model AI Flexibility + Zero-API Fallback:**
+   - Supports Google Gemini (`gemini-1.5-flash`), OpenAI (`gpt-4o-mini`), and Anthropic Claude (`claude-3-5-haiku`).
+   - Graceful deterministic heuristic engine if no API keys are provided — fully offline-capable.
+
+6. **Local Research History & Privacy by Design:**
    - Searchable local storage (`chrome.storage.local`).
-   - Review past analyses, copy markdown summaries, and reopen source links anytime.
-
-6. **Privacy by Design:**
-   - Zero background tracking or browsing monitoring.
-   - Text is captured strictly upon explicit user interaction.
-   - Operates locally; only sends passages to the backend when you click "Compare".
+   - Zero passive tracking or browsing history collection. Text captured strictly on explicit user action.
 
 ---
 
@@ -68,7 +68,7 @@ contextlens/
 │   ├── manifest.json          # MV3 configuration & permissions
 │   ├── sidepanel.html         # Main docked side panel UI (Linear/Arc aesthetic)
 │   ├── sidepanel.css          # Modern dark-mode styling with subtle glows
-│   ├── sidepanel.js           # Extension controller, state, & offline engine
+│   ├── sidepanel.js           # Extension controller, state, & client fallback
 │   ├── popup.html             # Compact popup view
 │   ├── content.js             # On-page text selection & floating capture pill
 │   ├── content.css            # Floating pill & notification styles
@@ -76,15 +76,19 @@ contextlens/
 │   └── icons/                 # Crisp vector-generated extension icons
 ├── backend/                   # Python FastAPI Service
 │   ├── main.py                # REST API endpoints (/compare, /health, /demos)
-│   ├── models.py              # Pydantic schemas
-│   ├── analyzer.py            # AI integration (Gemini / OpenAI / Claude / Fallback)
-│   ├── requirements.txt       # Minimal dependencies
-│   ├── test_main.py           # Backend automated test suite
-│   └── .env.example           # Environment template
-├── test_pages/                # Interactive Hackathon Demo Articles
+│   ├── models.py              # Pydantic schemas with normalization & error handling
+│   ├── analyzer.py            # Orchestration pipeline (AI + Heuristic Fallback)
+│   ├── llm_provider.py        # Multi-provider LLM abstraction (Gemini / OpenAI / Claude)
+│   ├── source_search.py       # Web search integration (SerpAPI / Brave / DuckDuckGo)
+│   ├── source_evaluator.py    # Source relevance, credibility, and stance scoring
+│   ├── requirements.txt       # Dependencies (FastAPI, Uvicorn, Pydantic, HTTPX, Pytest)
+│   ├── test_main.py           # 24-scenario automated test suite
+│   └── .env.example           # Environment template for API keys
+├── test_pages/                # Interactive Demo Articles
 │   ├── article_a.html         # TechNews Daily (Claims keynote is Friday)
 │   └── article_b.html         # EventHub Official (Confirms keynote is Saturday)
-├── run_backend.sh             # 1-command startup script
+├── run_backend.sh             # Linux/macOS startup script
+├── pytest.ini                 # Pytest configuration
 └── README.md
 ```
 
