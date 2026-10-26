@@ -504,22 +504,6 @@ const BUILTIN_THEMES = [
       "--shadow-glow": "0 0 0 2px #0000ee"
     }
   }
-];: "rgba(255, 68, 68, 0.18)",
-      "--status-consistent": "#00ff88",
-      "--status-consistent-bg": "rgba(0, 255, 136, 0.15)",
-      "--status-context": "#ffaa00",
-      "--status-context-bg": "rgba(255, 170, 0, 0.15)",
-      "--status-insufficient": "#aaaaaa",
-      "--status-insufficient-bg": "rgba(170, 170, 170, 0.15)",
-      "--text-main": "#ffffff",
-      "--text-muted": "#d4d4d4",
-      "--text-dim": "#888888",
-      "--scrollbar-thumb": "rgba(255, 255, 255, 0.3)",
-      "--shadow-sm": "0 1px 2px rgba(0,0,0,0.8)",
-      "--shadow-md": "0 4px 12px rgba(0,0,0,0.9)",
-      "--shadow-glow": "0 0 20px rgba(255, 255, 0, 0.2)"
-    }
-  }
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
