@@ -1,16 +1,17 @@
-/* ContextLens Floating Action Pill & Toast Styles */
+/* ContextLens Floating Action Pill, Draggable Badge & Toast Styles */
 
+/* 1. Selection Floating Pill (Appears on text selection, fully draggable) */
 #contextlens-floating-pill {
-  position: absolute;
+  position: fixed;
   z-index: 2147483647;
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(139, 92, 246, 0.4);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px rgba(139, 92, 246, 0.2);
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.6), 0 0 18px rgba(139, 92, 246, 0.25);
   border-radius: 9999px;
   padding: 4px 8px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -19,6 +20,22 @@
   color: #f1f5f9;
   user-select: none;
   animation: contextlensFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  touch-action: none;
+}
+
+#contextlens-floating-pill:hover {
+  border-color: rgba(139, 92, 246, 0.7);
+  box-shadow: 0 12px 35px -5px rgba(0, 0, 0, 0.7), 0 0 22px rgba(139, 92, 246, 0.35);
+}
+
+#contextlens-floating-pill.is-dragging {
+  cursor: grabbing !important;
+  user-select: none !important;
+  opacity: 0.95;
+  transform: scale(1.03);
+  transition: transform 0.05s ease, opacity 0.05s ease;
+  box-shadow: 0 16px 40px -5px rgba(0, 0, 0, 0.8), 0 0 25px rgba(139, 92, 246, 0.45);
 }
 
 @keyframes contextlensFadeIn {
@@ -32,6 +49,22 @@
   }
 }
 
+.contextlens-drag-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: #64748b;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.contextlens-drag-handle:hover {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.2);
+}
+
 .contextlens-pill-brand {
   display: flex;
   align-items: center;
@@ -42,6 +75,7 @@
   font-weight: 600;
   font-size: 11px;
   letter-spacing: 0.3px;
+  cursor: grab;
 }
 
 .contextlens-pill-btn {
@@ -74,7 +108,116 @@
   color: #7dd3fc;
 }
 
-/* On-Page Toast Notification */
+.contextlens-pill-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.contextlens-pill-close:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* 2. Persistent Floating Badge / Orb (Draggable all around the webpage) */
+#contextlens-floating-badge {
+  position: fixed;
+  z-index: 2147483646;
+  bottom: 28px;
+  right: 28px;
+  display: flex;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 25px -4px rgba(0, 0, 0, 0.5), 0 0 15px rgba(139, 92, 246, 0.2);
+  border-radius: 9999px;
+  padding: 4px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  cursor: grab;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  touch-action: none;
+}
+
+#contextlens-floating-badge:hover {
+  border-color: rgba(139, 92, 246, 0.7);
+  box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.35);
+  transform: translateY(-2px);
+}
+
+#contextlens-floating-badge.is-dragging {
+  cursor: grabbing !important;
+  opacity: 0.92;
+  transform: scale(1.04) !important;
+  transition: none !important;
+}
+
+.contextlens-badge-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+}
+
+.contextlens-badge-content {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  white-space: nowrap;
+  transition: max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease, padding 0.2s ease;
+  padding: 0;
+}
+
+#contextlens-floating-badge:hover .contextlens-badge-content,
+#contextlens-floating-badge.is-expanded .contextlens-badge-content {
+  max-width: 280px;
+  opacity: 1;
+  padding: 0 8px 0 6px;
+}
+
+.contextlens-badge-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #f1f5f9;
+  letter-spacing: 0.2px;
+}
+
+.contextlens-badge-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  padding: 3px 7px;
+  border-radius: 9999px;
+  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.contextlens-badge-btn:hover {
+  background: rgba(139, 92, 246, 0.35);
+  color: #ffffff;
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* 3. On-Page Toast Notification */
 #contextlens-toast-container {
   position: fixed;
   bottom: 24px;
