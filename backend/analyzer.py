@@ -45,9 +45,17 @@ async def analyze_passages(
     Analyzes two passages using an available LLM (Gemini, OpenAI, Anthropic),
     or falls back to the deterministic context analysis engine if no API key is configured.
     """
-    gemini_key = api_key_override or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
+
+    if api_key_override:
+        if api_key_override.startswith("sk-ant-"):
+            anthropic_key = api_key_override
+        elif api_key_override.startswith("sk-"):
+            openai_key = api_key_override
+        else:
+            gemini_key = api_key_override
 
     # 1. Try Gemini API if key is available
     if gemini_key:
@@ -198,6 +206,38 @@ def _clean_json_str(s: str) -> str:
     return s.strip()
 
 
+STOPWORDS = {
+    'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'from', 'to', 'at', 'in', 'on', 'by',
+    'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after',
+    'above', 'below', 'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'then', 'once',
+    'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more',
+    'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than',
+    'too', 'very', 'can', 'will', 'just', 'should', 'now', 'a', 'an', 'and', 'or',
+    'as', 'of', 'that', 'this', 'these', 'those', 'it', 'its', 'lists', 'stated', 'states', 'notes',
+    'according', 'information', 'reported', 'reports'
+}
+
+def _normalize_token(w: str) -> str:
+    w = w.lower().strip(".,;:!?\"'()[]{}")
+    if w.endswith("days"): return w[:-1]
+    if w.endswith("ing"): return w[:-3]
+    if w.endswith("ed"): return w[:-2]
+    if w.endswith("es"): return w[:-2]
+    if w.endswith("s") and not w.endswith("ss"): return w[:-1]
+    return w
+
+def _extract_features(text: str):
+    raw_tokens = re.findall(r'[a-zA-Z0-9]+', text)
+    tokens = [_normalize_token(t) for t in raw_tokens if t.strip()]
+    content_tokens = {t for t in tokens if t not in STOPWORDS and len(t) > 1}
+    numbers = set(re.findall(r'\b\d+(?:\.\d+)?\b', text))
+    return content_tokens, numbers
+
+def _clean_source_label(claim: ClaimItem, default_name: str) -> str:
+    if claim.title and claim.title.strip() not in ["Manual Input", "Untitled Source", "Untitled Webpage"]:
+        return f"{default_name} ({claim.title})"
+    return default_name
+
 def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareResponse:
     """
     Deterministic context engine designed for offline evaluation,
@@ -205,6 +245,9 @@ def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareRe
     """
     t_a = claim_a.text.lower()
     t_b = claim_b.text.lower()
+
+    label_a = _clean_source_label(claim_a, "Source A")
+    label_b = _clean_source_label(claim_b, "Source B")
 
     days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
     found_days_a = [d for d in days if d in t_a]
@@ -220,9 +263,9 @@ def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareRe
                 "These appear to be mutually exclusive schedules for the same event."
             ),
             key_differences=[
-                f"Source A specifies schedule: {', '.join(found_days_a).capitalize()}",
-                f"Source B specifies schedule: {', '.join(found_days_b).capitalize()}",
-                "Both passages appear to discuss the identical keynote/event name."
+                f"{label_a} specifies schedule: {', '.join(found_days_a).capitalize()}",
+                f"{label_b} specifies schedule: {', '.join(found_days_b).capitalize()}",
+                "Both passages appear to discuss the identical keynote or event."
             ],
             missing_context=[
                 "Confirm whether the event spans multiple days (e.g. weekend schedule).",
@@ -272,8 +315,8 @@ def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareRe
                 "(such as base retail price excluding fees vs. final checkout total including taxes and shipping)."
             ),
             key_differences=[
-                "Passage A highlights baseline MSRP or starting listing.",
-                "Passage B includes checkout-level additions such as shipping or sales taxes."
+                f"{label_a} highlights baseline MSRP or starting listing.",
+                f"{label_b} includes checkout-level additions such as shipping or sales taxes."
             ],
             missing_context=[
                 "Confirm if Passage A explicitly states 'starting at' or excludes handling.",
@@ -301,8 +344,8 @@ def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareRe
                 "the country, exact calendar year, demographic cohort, or statistical methodology."
             ),
             key_differences=[
-                "Passage A describes an upward trend or elevated rate.",
-                "Passage B asserts an all-time low or positive drop.",
+                f"{label_a} describes an upward trend or elevated rate.",
+                f"{label_b} asserts an all-time low or positive drop.",
                 "Geographic boundaries and time horizons are missing from both statements."
             ],
             missing_context=[
@@ -319,16 +362,72 @@ def _run_heuristic_analysis(claim_a: ClaimItem, claim_b: ClaimItem) -> CompareRe
             evidence_b=claim_b.text
         )
 
+    # Semantic token and numeric feature analysis
+    c_a, num_a = _extract_features(t_a)
+    c_b, num_b = _extract_features(t_b)
+    overlap = c_a.intersection(c_b)
+    min_tokens = min(len(c_a), len(c_b)) if (c_a and c_b) else 0
+    overlap_ratio = (len(overlap) / min_tokens) if min_tokens > 0 else 0.0
+
+    # Conflicting numbers for the same subject (e.g. 9 to 5 vs 10 to 6 without pricing modifiers)
+    if len(overlap) >= 2 and num_a and num_b and (num_a != num_b) and not has_pricing_context:
+        return CompareResponse(
+            classification="possible_contradiction",
+            explanation=(
+                f"Both passages discuss the same subject ({', '.join(sorted(list(overlap))[:3])}), "
+                f"but state conflicting figures or hours: {label_a} states '{', '.join(sorted(list(num_a)))}' "
+                f"while {label_b} states '{', '.join(sorted(list(num_b)))}'."
+            ),
+            key_differences=[
+                f"{label_a} cites figures/hours: {', '.join(sorted(list(num_a)))}",
+                f"{label_b} cites figures/hours: {', '.join(sorted(list(num_b)))}",
+                "The statements appear to describe incompatible terms for the same subject."
+            ],
+            missing_context=[
+                "Verify whether seasonal or weekend adjustments apply.",
+                "Check for recent policy changes or revisions."
+            ],
+            verification_questions=[
+                "Which source reflects the official current schedule or figure?",
+                "Has an updated timetable been released?"
+            ],
+            evidence_a=claim_a.text,
+            evidence_b=claim_b.text
+        )
+
+    # Consistent statement check (matching numbers or matching facts with high token overlap)
+    if (overlap_ratio >= 0.5 or (len(overlap) >= 3)) and (num_a == num_b or (not num_a and not num_b)):
+        key_topics = ", ".join(sorted(list(overlap))[:4])
+        return CompareResponse(
+            classification="consistent",
+            explanation=(
+                f"Both passages corroborate that the {key_topics} details align. "
+                "The statements share matching factual terms and schedule parameters without conflict."
+            ),
+            key_differences=[
+                "No substantive factual discrepancies detected; both passages agree on core details."
+            ],
+            missing_context=[
+                "Check for any special holiday exceptions or additional operational rules."
+            ],
+            verification_questions=[
+                "Do both sources draw from the same primary publication?",
+                "Are there any secondary conditions not captured in these excerpts?"
+            ],
+            evidence_a=claim_a.text,
+            evidence_b=claim_b.text
+        )
+
     # Default balanced context comparison
     return CompareResponse(
         classification="different_context",
         explanation=(
-            "The passages discuss related subjects, but subtle variations in emphasis, perspective, or timing "
+            "The passages discuss related subjects, but variations in emphasis, perspective, or timing "
             "indicate they describe different aspects rather than an outright factual contradiction."
         ),
         key_differences=[
-            f"Passage A focuses on context from: {claim_a.title}",
-            f"Passage B emphasizes context from: {claim_b.title}",
+            f"{label_a} states: \"{claim_a.text[:70]}...\"",
+            f"{label_b} states: \"{claim_b.text[:70]}...\"",
             "Differences in terminology reflect divergent focus rather than mutual incompatibility."
         ],
         missing_context=[
