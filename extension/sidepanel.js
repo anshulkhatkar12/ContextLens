@@ -661,20 +661,30 @@ document.addEventListener("DOMContentLoaded", () => {
     resultsSection.classList.remove("hidden");
 
     // Configure Badge
-    const classification = (result.classification || "insufficient_context").toLowerCase();
+    const rawClass = (result.classification || "insufficient_context").toLowerCase();
     classificationBadge.className = "classification-badge";
 
-    if (classification === "possible_contradiction" || classification.includes("contradiction")) {
+    if (rawClass === "contradicted" || rawClass === "possible_contradiction" || rawClass.includes("contradict")) {
       classificationBadge.classList.add("badge-contradiction");
       badgeIcon.textContent = "⚠️";
-      badgeLabel.textContent = "POSSIBLE CONTRADICTION";
+      badgeLabel.textContent = "CONTRADICTED";
       badgeSub.textContent = "The passages appear to make incompatible claims about the same subject.";
-    } else if (classification === "consistent" || classification.includes("consistent")) {
+    } else if (rawClass === "supported" || rawClass === "consistent" || rawClass.includes("support") && !rawClass.includes("partial")) {
       classificationBadge.classList.add("badge-consistent");
       badgeIcon.textContent = "✅";
-      badgeLabel.textContent = "CONSISTENT";
-      badgeSub.textContent = "The passages appear compatible or support similar conclusions.";
-    } else if (classification === "different_context" || classification.includes("context")) {
+      badgeLabel.textContent = "SUPPORTED";
+      badgeSub.textContent = "The evidence confirms and substantiates the claim.";
+    } else if (rawClass === "partially_supported" || rawClass.includes("partial")) {
+      classificationBadge.classList.add("badge-context");
+      badgeIcon.textContent = "⚖️";
+      badgeLabel.textContent = "PARTIALLY SUPPORTED";
+      badgeSub.textContent = "Some elements are corroborated, but key aspects are modified or unconfirmed.";
+    } else if (rawClass === "unrelated") {
+      classificationBadge.classList.add("badge-neutral");
+      badgeIcon.textContent = "🔀";
+      badgeLabel.textContent = "UNRELATED";
+      badgeSub.textContent = "The passages discuss different, unrelated subjects.";
+    } else if (rawClass === "different_context" || rawClass.includes("context") && !rawClass.includes("insufficient")) {
       classificationBadge.classList.add("badge-context");
       badgeIcon.textContent = "⏱️";
       badgeLabel.textContent = "DIFFERENT CONTEXT";
@@ -682,7 +692,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       classificationBadge.classList.add("badge-insufficient");
       badgeIcon.textContent = "❓";
-      badgeLabel.textContent = "INSUFFICIENT CONTEXT";
+      badgeLabel.textContent = "INSUFFICIENT EVIDENCE";
       badgeSub.textContent = "There is not enough information to verify the relationship.";
     }
 
@@ -775,6 +785,28 @@ document.addEventListener("DOMContentLoaded", () => {
       resultDomainB.textContent = "Manual / Unlinked";
     } else {
       resultSourceB.style.pointerEvents = "auto";
+    }
+
+    // Additional Discovered Sources (LangChain Source Discovery)
+    const extraSources = Array.isArray(result.additional_sources) ? result.additional_sources : [];
+    const sourceLinksGrid = document.querySelector(".source-links-grid");
+    if (sourceLinksGrid) {
+      // Remove previously appended extra sources
+      const existingExtra = sourceLinksGrid.querySelectorAll(".extra-source-link");
+      existingExtra.forEach(el => el.remove());
+
+      extraSources.forEach((src, idx) => {
+        if (src.url && src.url !== urlA && src.url !== urlB) {
+          const a = document.createElement("a");
+          a.className = "source-link-btn extra-source-link";
+          a.href = src.url;
+          a.target = "_blank";
+          const domain = formatUrlDomain(src.url);
+          const typeBadge = src.content_type === "full_page" ? " [Full Page]" : " [Snippet]";
+          a.innerHTML = `<span>🌐 Source ${idx + 1}: ${src.title || domain}${typeBadge}</span><span class="source-domain">${domain}</span>`;
+          sourceLinksGrid.appendChild(a);
+        }
+      });
     }
   }
 
