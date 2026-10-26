@@ -77,6 +77,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // ----------------------------------------------------------------
   // INITIALIZATION
   // ----------------------------------------------------------------
+  if (typeof ContextLensSettings !== "undefined") {
+    ContextLensSettings.loadPreferences(() => {
+      ContextLensSettings.initSettingsUI();
+    });
+  }
   loadStoredData();
   setupEventListeners();
   checkBackendHealth();
@@ -597,6 +602,11 @@ document.addEventListener("DOMContentLoaded", () => {
       resultDomainB.textContent = "Manual / Unlinked";
     } else {
       resultSourceB.style.pointerEvents = "auto";
+    }
+
+    // Apply active section collapse, ordering, and icon visibility preferences to newly rendered results
+    if (typeof ContextLensSettings !== "undefined") {
+      ContextLensSettings.applyPreferencesToDOM(ContextLensSettings.getPreferences());
     }
   }
 

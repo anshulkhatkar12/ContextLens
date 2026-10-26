@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ContextLens Settings & Personalization Test Suite</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <style>
+    body {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 24px;
+      line-height: 1.5;
+    }
+
+    .test-dashboard {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #1e293b;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .test-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 16px;
+      margin-bottom: 20px;
+    }
+
+    .test-title-main {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .test-stats {
+      display: flex;
+      gap: 12px;
+    }
+
+    .stat-pill {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .stat-passed {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .stat-failed {
+      background: rgba(244, 63, 94, 0.18);
+      color: #f87171;
+      border: 1px solid rgba(244, 63, 94, 0.3);
+    }
+
+    .test-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 0;
+      padding: 0;
+    }
+
+    .test-item {
+      background: #0f172a;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 14px 16px;
+      transition: all 0.15s ease;
+    }
+
+    .test-item.pass {
+      border-left: 4px solid #10b981;
+    }
+
+    .test-item.fail {
+      border-left: 4px solid #f43f5e;
+    }
+
+    .test-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .test-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pass {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+    }
+
+    .badge-fail {
+      background: rgba(244, 63, 94, 0.2);
+      color: #f87171;
+    }
+
+    .test-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f1f5f9;
+    }
+
+    .test-details {
+      font-size: 12.5px;
+      color: #94a3b8;
+      line-height: 1.45;
+    }
+
+    .btn-rerun {
+      background: #8b5cf6;
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    .btn-rerun:hover {
+      background: #7c3aed;
+    }
+
+    /* Sandbox preview container for visual check */
+    .sandbox-preview {
+      margin-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-dashboard">
+    <div class="test-header-bar">
+      <div class="test-title-main">
+        <span>🔍 ContextLens UI Settings Verification</span>
+      </div>
+      <div class="test-stats">
+        <span class="stat-pill">Total: <strong id="tests-total">0</strong></span>
+        <span class="stat-pill stat-passed">Passed: <strong id="tests-passed">0</strong></span>
+        <span class="stat-pill stat-failed">Failed: <strong id="tests-failed">0</strong></span>
+      </div>
+    </div>
+
+    <ul id="test-results-list" class="test-list">
+      <!-- Test results rendered here -->
+    </ul>
+
+    <button class="btn-rerun" onclick="window.runAllTests()">↺ Re-run Test Suite</button>
+
+    <!-- Hidden elements for test DOM assertions -->
+    <div style="display:none;">
+      <div class="app-container">
+        <textarea id="text-a"></textarea>
+        <textarea id="text-b"></textarea>
+        <button id="btn-swap"></button>
+        <div id="results-section"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+  <script src="test_settings.js"></script>
+</body>
+</html>
