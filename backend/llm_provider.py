@@ -20,6 +20,12 @@ import re
 from typing import Any, Dict, Optional
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+_backend_env = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_backend_env):
+    load_dotenv(_backend_env)
 
 from .models import CompareResponse
 from .guardrails import (
@@ -597,6 +603,8 @@ def get_configured_provider_name() -> str:
         return "groq"
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "gemini"
+    if os.getenv("GROQ_API_KEY"):
+        return "groq"
     if os.getenv("OPENAI_API_KEY"):
         return "openai"
     if os.getenv("ANTHROPIC_API_KEY"):
@@ -625,9 +633,11 @@ def get_llm_model(
             override_provider = "groq"
         elif api_key_override.startswith("sk-ant-"):
             override_provider = "anthropic"
+        elif api_key_override.startswith("gsk_"):
+            override_provider = "groq"
         elif api_key_override.startswith("sk-"):
             override_provider = "openai"
-        elif api_key_override.startswith("AIza") or len(api_key_override) > 20:
+        elif api_key_override.startswith("AIza") or api_key_override.startswith("AQ.") or len(api_key_override) > 20:
             override_provider = "gemini"
             
     if override_provider and not provider_override:
@@ -660,9 +670,9 @@ def get_llm_model(
             raise LLMConfigurationError(f"langchain_google_genai is not installed: {e}")
 
     # 2. Groq (Fast Cloud Inference)
-    elif provider in ("groq",):
+    elif provider in ("groq", "groq-cloud"):
         groq_key = None
-        if api_key_override and api_key_override.startswith("gsk_"):
+        if api_key_override and (api_key_override.startswith("gsk_") or provider in ("groq", "groq-cloud")):
             groq_key = api_key_override
         groq_key = groq_key or os.getenv("GROQ_API_KEY")
         if not groq_key:

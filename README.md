@@ -29,7 +29,7 @@ LangChain powers the core semantic intelligence in ContextLens:
    Instead of raw text generation or loose keyword matching, LangChain's `with_structured_output` binds strict Pydantic schemas (`StructuredAnalysisOutput`) to the underlying model. This guarantees that responses always contain validated classifications, passage interpretations, evidence breakdowns, key differences, missing context, and actionable verification questions.
 
 2. **Unified, Provider-Agnostic Model Routing (`backend/llm_provider.py`):**
-   LangChain standardizes model access across Google Gemini (`ChatGoogleGenerativeAI`), OpenAI (`ChatOpenAI`), and Anthropic Claude (`ChatAnthropic`). Switching providers requires only changing `LLM_PROVIDER` in your environment.
+   LangChain standardizes model access across Google Gemini (`ChatGoogleGenerativeAI`), Groq (`ChatGroq`), OpenAI (`ChatOpenAI`), and Anthropic Claude (`ChatAnthropic`). Switching providers requires only changing `LLM_PROVIDER` in your environment.
 
 3. **Untrusted Data Encapsulation & Safety:**
    LangChain's prompt architecture encapsulates untrusted webpage text within boundary markers, instructing models to resist prompt injection attempts embedded in retrieved web pages.
@@ -150,10 +150,11 @@ cp backend/.env.example backend/.env
 
 | Variable | Allowed Values | Description |
 |---|---|---|
-| `LLM_PROVIDER` | `gemini`, `openai`, `anthropic`, `local`, `heuristic` | Active AI provider (default: `gemini`). |
-| `LLM_MODEL` | string (optional) | Model name override (e.g. `gemini-1.5-flash`, `gpt-4o-mini`, `claude-3-haiku-20240307`). |
+| `LLM_PROVIDER` | `gemini`, `groq`, `openai`, `anthropic`, `local`, `heuristic` | Active AI provider (default: `gemini`). |
+| `LLM_MODEL` | string (optional) | Model name override (e.g. `gemini-3.8-flash`, `openai/gpt-oss-120b`, `gpt-4o-mini`, `claude-3-haiku-20240307`). |
 | `LLM_TEMPERATURE` | float (e.g. `0.2`) | Generation temperature (default: `0.2`). |
 | `GEMINI_API_KEY` | string | Google AI Studio key (required if `LLM_PROVIDER=gemini`). |
+| `GROQ_API_KEY` | string | Groq API key (required if `LLM_PROVIDER=groq`). |
 | `OPENAI_API_KEY` | string | OpenAI API key (required if `LLM_PROVIDER=openai`). |
 | `ANTHROPIC_API_KEY`| string | Anthropic API key (required if `LLM_PROVIDER=anthropic`). |
 | `LOCAL_LLM_URL` | string | Local model endpoint (e.g. `http://localhost:11434` for Ollama). |

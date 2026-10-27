@@ -2123,12 +2123,8 @@ ${limitationsMd ? `**Analysis Limitations:**\n${limitationsMd}\n` : ""}
         chip.title = `${t.name} (${t.category === "light" ? "Default Light" : "Curated Dark"})`;
         chip.setAttribute("role", "radio");
         chip.setAttribute("aria-checked", isActive ? "true" : "false");
-        const swatchBg = t.image
-          ? `background-image: url('assets/themes/${t.image}'); background-size: cover; background-position: center; border: 1.5px solid ${t.tokens['--border-strong'] || 'rgba(255,255,255,0.3)'}`
-          : `background: ${t.accentColor || t.tokens['--accent-violet']}; border: 1.5px solid ${t.tokens['--border-strong'] || 'rgba(255,255,255,0.3)'}`;
-
         chip.innerHTML = `
-          <span class="chip-color-swatch" style="${swatchBg}"></span>
+          <span class="chip-color-swatch" style="background: ${t.accentColor || t.tokens['--accent-violet']}; border: 1.5px solid ${t.tokens['--border-strong'] || 'rgba(255,255,255,0.3)'}"></span>
           <span class="chip-name">${escapeHtml(t.name)}</span>
           <span class="chip-check" aria-hidden="true">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>

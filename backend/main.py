@@ -14,7 +14,9 @@ from .source_evaluator import filter_and_rank_sources
 # Load environment variables from .env
 from pathlib import Path
 load_dotenv()
-load_dotenv(Path(__file__).parent / ".env")
+_backend_env = Path(__file__).parent / ".env"
+if _backend_env.exists():
+    load_dotenv(_backend_env)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -75,8 +77,8 @@ def read_root():
 @app.get("/health")
 def health_check():
     provider = get_configured_provider_name()
-    has_groq      = bool(os.getenv("GROQ_API_KEY"))
     has_gemini    = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
+    has_groq      = bool(os.getenv("GROQ_API_KEY"))
     has_openai    = bool(os.getenv("OPENAI_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     has_serpapi   = bool(os.getenv("SERPAPI_KEY"))
@@ -91,11 +93,14 @@ def health_check():
     if provider == "groq" or (has_groq and not (has_gemini or has_openai or has_anthropic)):
         engine_name = f"Groq ({os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')}) [via LangChain]"
         llm_active = True
-    elif llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_openai or has_anthropic)):
+    elif llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_groq or has_openai or has_anthropic)):
         engine_name = f"Local Qwen ({local_model}) [No API Key Required]"
         llm_active = True
     elif has_gemini:
         engine_name = "Google Gemini (via LangChain)"
+        llm_active = True
+    elif has_groq:
+        engine_name = f"Groq ({os.getenv('GROQ_MODEL', 'openai/gpt-oss-120b')}) [via LangChain]"
         llm_active = True
     elif has_openai:
         engine_name = "OpenAI GPT (via LangChain)"

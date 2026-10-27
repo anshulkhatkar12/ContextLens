@@ -226,6 +226,17 @@ def test_missing_provider_configuration():
             get_llm_model()
         assert "GEMINI_API_KEY" in str(exc_info.value)
 
+    with patch.dict(os.environ, {"LLM_PROVIDER": "groq"}, clear=True):
+        with pytest.raises(LLMConfigurationError) as exc_info:
+            get_llm_model()
+        assert "GROQ_API_KEY is not configured" in str(exc_info.value)
+
+    with patch.dict(os.environ, {"LLM_PROVIDER": "groq", "GROQ_API_KEY": "gsk_test"}, clear=True):
+        with patch("langchain_groq.ChatGroq") as mock_groq:
+            mock_groq.return_value = MagicMock()
+            m, p = get_llm_model()
+            assert p == "groq"
+
 
 # 8. Malformed model output handling
 @pytest.mark.anyio
