@@ -11,21 +11,15 @@ const APPEARANCE_DEFAULTS = {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BUILT-IN CURATED THEMES
-// Directly mapped to UI Reference Images:
-// 1st picture = Emerald Glass
-// 2nd picture = Crimson Glass
-// 3rd picture = Lavender Glass (Default)
-// 4th picture = Amethyst
-// Last picture = CATOO
+// 1 Lavender Glass (Default) + 5 Curated Dark Themes
 // ─────────────────────────────────────────────────────────────────────────────
 const BUILTIN_THEMES = [
-  // ── DEFAULT THEME: LAVENDER GLASS (3rd Picture) ──
+  // ── DEFAULT THEME: LAVENDER GLASS ──
   {
     id: "lavender",
     name: "Lavender Glass",
     category: "light",
     description: "Frosted lavender-white glass with soft lilac gradients and ambient purple glow",
-    image: "lavender.png",
     previewGradient: "linear-gradient(135deg, #f8f6fc 0%, #ede9fe 100%)",
     accentColor: "#7c3aed",
     tokens: {
@@ -60,89 +54,7 @@ const BUILTIN_THEMES = [
     }
   },
 
-  // ── 1ST PICTURE: EMERALD GLASS ──
-  {
-    id: "emerald",
-    name: "Emerald Glass",
-    category: "dark",
-    description: "Deep forest green glass, serene botanical atmosphere, muted mint highlights",
-    image: "emerald.png",
-    previewGradient: "linear-gradient(135deg, #050e09 0%, #133320 100%)",
-    accentColor: "#34d399",
-    tokens: {
-      "--bg-primary": "#050e09",
-      "--bg-surface": "rgba(10, 27, 17, 0.78)",
-      "--bg-surface-elevated": "rgba(16, 40, 26, 0.88)",
-      "--bg-hover": "rgba(25, 59, 39, 0.65)",
-      "--bg-glass": "rgba(10, 27, 17, 0.65)",
-      "--border-subtle": "rgba(52, 211, 153, 0.16)",
-      "--border-focus": "rgba(52, 211, 153, 0.6)",
-      "--border-strong": "rgba(52, 211, 153, 0.32)",
-      "--accent-violet": "#34d399",
-      "--accent-violet-hover": "#10b981",
-      "--accent-cyan": "#6ee7b7",
-      "--accent-blue": "#a7f3d0",
-      "--status-contradiction": "#f87171",
-      "--status-contradiction-bg": "rgba(248, 113, 113, 0.15)",
-      "--status-consistent": "#34d399",
-      "--status-consistent-bg": "rgba(52, 211, 153, 0.15)",
-      "--status-context": "#6ee7b7",
-      "--status-context-bg": "rgba(110, 231, 183, 0.14)",
-      "--status-insufficient": "#94a3b8",
-      "--status-insufficient-bg": "rgba(148, 163, 184, 0.12)",
-      "--text-main": "#f0fdf4",
-      "--text-muted": "#a7f3d0",
-      "--text-dim": "#577c68",
-      "--scrollbar-thumb": "rgba(52, 211, 153, 0.2)",
-      "--shadow-sm": "0 2px 8px rgba(0, 0, 0, 0.4)",
-      "--shadow-md": "0 8px 24px rgba(0, 0, 0, 0.6)",
-      "--shadow-glow": "0 0 28px rgba(52, 211, 153, 0.2)",
-      "--glass-blur": "blur(16px)"
-    }
-  },
-
-  // ── 2ND PICTURE: CRIMSON GLASS ──
-  {
-    id: "crimson",
-    name: "Crimson Glass",
-    category: "dark",
-    description: "Near-black surfaces, burgundy undertones, restrained rose glass accents",
-    image: "crimson.png",
-    previewGradient: "linear-gradient(135deg, #0e0608 0%, #3f121d 100%)",
-    accentColor: "#f43f5e",
-    tokens: {
-      "--bg-primary": "#0e0608",
-      "--bg-surface": "rgba(28, 13, 18, 0.78)",
-      "--bg-surface-elevated": "rgba(42, 19, 27, 0.88)",
-      "--bg-hover": "rgba(62, 27, 39, 0.65)",
-      "--bg-glass": "rgba(28, 13, 18, 0.65)",
-      "--border-subtle": "rgba(244, 63, 94, 0.16)",
-      "--border-focus": "rgba(244, 63, 94, 0.6)",
-      "--border-strong": "rgba(244, 63, 94, 0.32)",
-      "--accent-violet": "#f43f5e",
-      "--accent-violet-hover": "#e11d48",
-      "--accent-cyan": "#fda4af",
-      "--accent-blue": "#fb7185",
-      "--status-contradiction": "#fb7185",
-      "--status-contradiction-bg": "rgba(251, 113, 133, 0.16)",
-      "--status-consistent": "#34d399",
-      "--status-consistent-bg": "rgba(52, 211, 153, 0.14)",
-      "--status-context": "#f472b6",
-      "--status-context-bg": "rgba(244, 114, 182, 0.14)",
-      "--status-insufficient": "#a1a1aa",
-      "--status-insufficient-bg": "rgba(161, 161, 170, 0.12)",
-      "--text-main": "#fff1f2",
-      "--text-muted": "#fda4af",
-      "--text-dim": "#9b6570",
-      "--scrollbar-thumb": "rgba(244, 63, 94, 0.22)",
-      "--shadow-sm": "0 2px 8px rgba(0, 0, 0, 0.45)",
-      "--shadow-md": "0 8px 24px rgba(0, 0, 0, 0.65)",
-      "--shadow-glow": "0 0 28px rgba(244, 63, 94, 0.2)",
-      "--glass-blur": "blur(16px)"
-    }
-  },
-
-  // ── 3RD IN GALLERY: MIDNIGHT ──
+  // ── CURATED DARK THEME 1: MIDNIGHT ──
   {
     id: "midnight",
     name: "Midnight",
@@ -182,13 +94,92 @@ const BUILTIN_THEMES = [
     }
   },
 
-  // ── 4TH PICTURE: AMETHYST ──
+  // ── CURATED DARK THEME 2: CRIMSON GLASS ──
+  {
+    id: "crimson",
+    name: "Crimson Glass",
+    category: "dark",
+    description: "Near-black surfaces, burgundy undertones, restrained rose glass accents",
+    previewGradient: "linear-gradient(135deg, #0e0608 0%, #3f121d 100%)",
+    accentColor: "#f43f5e",
+    tokens: {
+      "--bg-primary": "#0e0608",
+      "--bg-surface": "rgba(28, 13, 18, 0.78)",
+      "--bg-surface-elevated": "rgba(42, 19, 27, 0.88)",
+      "--bg-hover": "rgba(62, 27, 39, 0.65)",
+      "--bg-glass": "rgba(28, 13, 18, 0.65)",
+      "--border-subtle": "rgba(244, 63, 94, 0.16)",
+      "--border-focus": "rgba(244, 63, 94, 0.6)",
+      "--border-strong": "rgba(244, 63, 94, 0.32)",
+      "--accent-violet": "#f43f5e",
+      "--accent-violet-hover": "#e11d48",
+      "--accent-cyan": "#fda4af",
+      "--accent-blue": "#fb7185",
+      "--status-contradiction": "#fb7185",
+      "--status-contradiction-bg": "rgba(251, 113, 133, 0.16)",
+      "--status-consistent": "#34d399",
+      "--status-consistent-bg": "rgba(52, 211, 153, 0.14)",
+      "--status-context": "#f472b6",
+      "--status-context-bg": "rgba(244, 114, 182, 0.14)",
+      "--status-insufficient": "#a1a1aa",
+      "--status-insufficient-bg": "rgba(161, 161, 170, 0.12)",
+      "--text-main": "#fff1f2",
+      "--text-muted": "#fda4af",
+      "--text-dim": "#9b6570",
+      "--scrollbar-thumb": "rgba(244, 63, 94, 0.22)",
+      "--shadow-sm": "0 2px 8px rgba(0, 0, 0, 0.45)",
+      "--shadow-md": "0 8px 24px rgba(0, 0, 0, 0.65)",
+      "--shadow-glow": "0 0 28px rgba(244, 63, 94, 0.2)",
+      "--glass-blur": "blur(16px)"
+    }
+  },
+
+  // ── CURATED DARK THEME 3: EMERALD GLASS ──
+  {
+    id: "emerald",
+    name: "Emerald Glass",
+    category: "dark",
+    description: "Deep forest green glass, serene botanical atmosphere, muted mint highlights",
+    previewGradient: "linear-gradient(135deg, #050e09 0%, #133320 100%)",
+    accentColor: "#34d399",
+    tokens: {
+      "--bg-primary": "#050e09",
+      "--bg-surface": "rgba(10, 27, 17, 0.78)",
+      "--bg-surface-elevated": "rgba(16, 40, 26, 0.88)",
+      "--bg-hover": "rgba(25, 59, 39, 0.65)",
+      "--bg-glass": "rgba(10, 27, 17, 0.65)",
+      "--border-subtle": "rgba(52, 211, 153, 0.16)",
+      "--border-focus": "rgba(52, 211, 153, 0.6)",
+      "--border-strong": "rgba(52, 211, 153, 0.32)",
+      "--accent-violet": "#34d399",
+      "--accent-violet-hover": "#10b981",
+      "--accent-cyan": "#6ee7b7",
+      "--accent-blue": "#a7f3d0",
+      "--status-contradiction": "#f87171",
+      "--status-contradiction-bg": "rgba(248, 113, 113, 0.15)",
+      "--status-consistent": "#34d399",
+      "--status-consistent-bg": "rgba(52, 211, 153, 0.15)",
+      "--status-context": "#6ee7b7",
+      "--status-context-bg": "rgba(110, 231, 183, 0.14)",
+      "--status-insufficient": "#94a3b8",
+      "--status-insufficient-bg": "rgba(148, 163, 184, 0.12)",
+      "--text-main": "#f0fdf4",
+      "--text-muted": "#a7f3d0",
+      "--text-dim": "#577c68",
+      "--scrollbar-thumb": "rgba(52, 211, 153, 0.2)",
+      "--shadow-sm": "0 2px 8px rgba(0, 0, 0, 0.4)",
+      "--shadow-md": "0 8px 24px rgba(0, 0, 0, 0.6)",
+      "--shadow-glow": "0 0 28px rgba(52, 211, 153, 0.2)",
+      "--glass-blur": "blur(16px)"
+    }
+  },
+
+  // ── CURATED DARK THEME 4: AMETHYST ──
   {
     id: "amethyst",
     name: "Amethyst",
     category: "dark",
-    description: "Deep violet surfaces with vintage plum undertones and luminous vinyl highlights",
-    image: "amethyst.png",
+    description: "Deep violet surfaces with luminous purple highlights and restrained ultraviolet glow",
     previewGradient: "linear-gradient(135deg, #0e0919 0%, #2e1065 100%)",
     accentColor: "#c084fc",
     tokens: {
@@ -223,7 +214,7 @@ const BUILTIN_THEMES = [
     }
   },
 
-  // ── 5TH IN GALLERY: CARBON ──
+  // ── CURATED DARK THEME 5: CARBON ──
   {
     id: "carbon",
     name: "Carbon",
@@ -260,47 +251,6 @@ const BUILTIN_THEMES = [
       "--shadow-md": "0 8px 24px rgba(0, 0, 0, 0.7)",
       "--shadow-glow": "0 0 28px rgba(226, 232, 240, 0.14)",
       "--glass-blur": "blur(16px)"
-    }
-  },
-
-  // ── LAST PICTURE: CATOO ──
-  {
-    id: "catoo",
-    name: "CATOO",
-    category: "special",
-    description: "Joyful sunny sky and meadow greens with vibrant rainbow warmth and feline cheer",
-    image: "catoo.png",
-    previewGradient: "linear-gradient(135deg, #e0f4ff 0%, #fef3c7 50%, #dcfce7 100%)",
-    accentColor: "#0284c7",
-    tokens: {
-      "--bg-primary": "#eaf5fc",
-      "--bg-surface": "rgba(255, 255, 255, 0.85)",
-      "--bg-surface-elevated": "rgba(255, 255, 255, 0.95)",
-      "--bg-hover": "rgba(224, 242, 254, 0.88)",
-      "--bg-glass": "rgba(255, 255, 255, 0.75)",
-      "--border-subtle": "rgba(56, 189, 248, 0.32)",
-      "--border-focus": "rgba(245, 158, 11, 0.65)",
-      "--border-strong": "rgba(56, 189, 248, 0.5)",
-      "--accent-violet": "#0284c7",
-      "--accent-violet-hover": "#0369a1",
-      "--accent-cyan": "#f59e0b",
-      "--accent-blue": "#10b981",
-      "--status-contradiction": "#dc2626",
-      "--status-contradiction-bg": "rgba(220, 38, 38, 0.1)",
-      "--status-consistent": "#059669",
-      "--status-consistent-bg": "rgba(5, 150, 105, 0.1)",
-      "--status-context": "#7c3aed",
-      "--status-context-bg": "rgba(124, 58, 237, 0.1)",
-      "--status-insufficient": "#475569",
-      "--status-insufficient-bg": "rgba(71, 85, 105, 0.1)",
-      "--text-main": "#0f2438",
-      "--text-muted": "#334e68",
-      "--text-dim": "#627d98",
-      "--scrollbar-thumb": "rgba(56, 189, 248, 0.35)",
-      "--shadow-sm": "0 2px 8px rgba(2, 132, 199, 0.08)",
-      "--shadow-md": "0 8px 24px rgba(2, 132, 199, 0.12)",
-      "--shadow-glow": "0 0 28px rgba(251, 191, 36, 0.3)",
-      "--glass-blur": "blur(14px)"
     }
   }
 ];
@@ -504,6 +454,7 @@ window.ContextLensThemes = {
   contrastRatio,
   checkContrastWCAG,
   hexToRgb,
+  // Stubs for backward-compatible call sites
   applyDensity,
   applyRadius,
   applyTypography,
