@@ -10,7 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
     historyFilter: "all",
     selectedProvider: "groq",
     settings: {
-      backendUrl: "http://localhost:8000",
+      backendUrl: "https://recruiting-lows-trustees-cheers.trycloudflare.com",
       apiKey: "",
       defaultProvider: "groq"
     },
@@ -178,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           if (res.settings) {
             state.settings = { ...state.settings, ...res.settings };
-            settingBackendUrl.value = state.settings.backendUrl || "http://localhost:8000";
+            settingBackendUrl.value = state.settings.backendUrl || "https://recruiting-lows-trustees-cheers.trycloudflare.com";
             settingApiKey.value = state.settings.apiKey || "";
             if (settingDefaultProvider) {
               settingDefaultProvider.value = state.settings.defaultProvider || state.selectedProvider || "groq";
