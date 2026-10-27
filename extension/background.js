@@ -12,6 +12,13 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 
   chrome.contextMenus.create({
+    id: "contextlens-auto-corroborate",
+    parentId: "contextlens-parent",
+    title: "Find Corroborating & Opposing Evidence (1-Click)",
+    contexts: ["selection"]
+  });
+
+  chrome.contextMenus.create({
     id: "contextlens-save-claim",
     parentId: "contextlens-parent",
     title: "Save as Claim (Source A)",
@@ -73,7 +80,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     timestamp: timestamp
   };
 
-  if (info.menuItemId === "contextlens-save-claim") {
+  if (info.menuItemId === "contextlens-auto-corroborate") {
+    await chrome.storage.local.set({
+      current_claim: item,
+      auto_corroborate_trigger: Date.now()
+    });
+    notifyTab(tab?.id, "One-Click Corroborator launched! Discovering evidence...");
+    if (chrome.sidePanel && tab?.id) {
+      chrome.sidePanel.open({ tabId: tab.id }).catch(() => {});
+    }
+  } else if (info.menuItemId === "contextlens-save-claim") {
     await chrome.storage.local.set({ current_claim: item });
     notifyTab(tab?.id, "Claim saved to ContextLens (Source A)");
   } else if (info.menuItemId === "contextlens-save-evidence") {
@@ -84,6 +100,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
 // Listen for messages from content scripts or sidepanel
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "CORROBORATE_CLAIM") {
+    chrome.storage.local.set({
+      current_claim: message.payload,
+      auto_corroborate_trigger: Date.now()
+    }, () => {
+      sendResponse({ status: "success" });
+    });
+    return true;
+  }
+
   if (message.type === "CAPTURE_CLAIM") {
     chrome.storage.local.set({ current_claim: message.payload }, () => {
       sendResponse({ status: "success" });

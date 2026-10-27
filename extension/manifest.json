@@ -50,7 +50,14 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["assets/themes/*"],
+      "resources": [
+        "assets/themes/*",
+        "sidepanel.html",
+        "sidepanel.css",
+        "sidepanel.js",
+        "themes.js",
+        "icons/*"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
