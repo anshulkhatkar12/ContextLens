@@ -109,6 +109,10 @@
           <div class="card-header">
             <div class="card-tag tag-a">SOURCE A &bull; CLAIM</div>
             <div class="card-actions">
+              <button id="btn-quick-corroborate-a" class="btn-action-sm btn-corroborate-glow" title="One-Click Corroborator: Auto-discover supporting &amp; opposing evidence">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                Auto-Corroborate
+              </button>
               <button id="btn-capture-a" class="btn-action-sm" title="Capture selected text on current webpage">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 Capture Selection
@@ -165,6 +169,20 @@
         <div class="provider-toggle-group" id="provider-toggle-group">
           <button type="button" class="provider-toggle-btn active" data-provider="groq" title="Groq: Ultra-fast cloud inference">Groq (Fast)</button>
           <button type="button" class="provider-toggle-btn" data-provider="gemini" title="Google Gemini: Multi-modal AI reasoning">Gemini</button>
+        </div>
+      </div>
+
+      <!-- One-Click Corroborator (Auto-Discovery Engine) Action -->
+      <div class="corroborator-action-wrapper">
+        <button id="btn-auto-corroborate" class="btn-corroborate-engine" title="Highlight a single claim (Source A) and discover primary supporting sources, mainstream opposing counter-arguments, and neutral context reconciliations in 3 seconds!">
+          <span class="btn-spinner hidden" id="corroborate-spinner"></span>
+          <span class="btn-text" id="corroborate-btn-text">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/><polygon points="12 8 16 12 12 16 8 12 12 8" fill="currentColor"/></svg>
+            Find Corroborating &amp; Opposing Evidence (1-Click)
+          </span>
+        </button>
+        <div class="corroborator-subtext">
+          <span><strong>One-Click Corroborator:</strong> Auto-discovers Primary Supporting Sources, Counter-Arguments, &amp; Neutral Context via Tavily / DuckDuckGo in 3s</span>
         </div>
       </div>
 
@@ -249,6 +267,53 @@
             </div>
             <div id="res-title-b" class="res-source-title">Source B</div>
             <blockquote id="res-quote-b" class="res-source-quote"></blockquote>
+          </div>
+        </div>
+
+        <!-- One-Click Corroborator Tri-Perspective Breakdown -->
+        <div id="corroboration-insights-card" class="result-card corroboration-card hidden">
+          <div class="result-card-title corroboration-title">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            One-Click Corroborator: Tri-Perspective Auto-Discovery
+          </div>
+          <div class="corroboration-meta-pill" id="corroboration-engine-meta">
+            Discovered independent evidence across Tavily / DuckDuckGo in 3s
+          </div>
+
+          <!-- 3 Columns: Supporting, Opposing, Neutral Context -->
+          <div class="tri-perspective-grid">
+            <!-- 1. Primary Supporting Sources -->
+            <div class="perspective-column col-supporting">
+              <div class="perspective-header">
+                <span class="perspective-badge badge-supp">Primary Supporting</span>
+                <span class="perspective-badge-count" id="badge-supp-count">0</span>
+              </div>
+              <p class="perspective-sub">Government data, scientific papers, &amp; official findings</p>
+              <ul id="list-primary-supporting" class="perspective-points"></ul>
+              <div id="cards-supporting-sources" class="perspective-sources"></div>
+            </div>
+
+            <!-- 2. Mainstream Opposing Counter-Arguments -->
+            <div class="perspective-column col-opposing">
+              <div class="perspective-header">
+                <span class="perspective-badge badge-opp">Counter-Arguments</span>
+                <span class="perspective-badge-count" id="badge-opp-count">0</span>
+              </div>
+              <p class="perspective-sub">Critical scrutiny, opposing statistics, &amp; counter-claims</p>
+              <ul id="list-opposing-arguments" class="perspective-points"></ul>
+              <div id="cards-opposing-sources" class="perspective-sources"></div>
+            </div>
+
+            <!-- 3. Neutral Context Reconciliations -->
+            <div class="perspective-column col-neutral">
+              <div class="perspective-header">
+                <span class="perspective-badge badge-neut">Context Nuance &amp; Scope</span>
+                <span class="perspective-badge-count" id="badge-neut-count">0</span>
+              </div>
+              <p class="perspective-sub">Timeline shifts, definitions, &amp; conditions reconciling tension</p>
+              <ul id="list-context-reconciliations" class="perspective-points"></ul>
+              <div id="cards-neutral-sources" class="perspective-sources"></div>
+            </div>
           </div>
         </div>
 

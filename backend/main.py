@@ -5,14 +5,16 @@ from fastapi import FastAPI, Header, HTTPException, status, Query
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from .models import CompareRequest, CompareResponse, ClaimItem, SourceItem
-from .analyzer import analyze_passages
+from .models import CompareRequest, CompareResponse, ClaimItem, SourceItem, CorroborateRequest, CorroborateResponse
+from .analyzer import analyze_passages, corroborate_claim
 from .llm_provider import get_configured_provider_name, LLMConfigurationError
 from .source_search import search_sources, generate_search_query
 from .source_evaluator import filter_and_rank_sources
 
 # Load environment variables from .env
+from pathlib import Path
 load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 logging.basicConfig(
     level=logging.INFO,
@@ -63,7 +65,7 @@ def read_root():
         "version": "2.0.0",
         "tagline": "Don't just read information. Understand its context.",
         "documentation": "/docs",
-        "endpoints": ["/compare", "/search-sources", "/health", "/demos"],
+        "endpoints": ["/compare", "/corroborate", "/search-sources", "/health", "/demos"],
         "pipeline": "LangChain Semantic Comparison",
         "llm_provider": provider,
         "search_provider": search_provider,
@@ -283,3 +285,66 @@ async def compare_claims(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Comparison failed: {str(exc)}",
         )
+
+
+@app.post("/corroborate", response_model=CorroborateResponse)
+async def auto_corroborate(
+    req: CorroborateRequest,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_provider: Optional[str] = Header(None, alias="X-Provider"),
+):
+    """
+    🌐 One-Click Corroborator (Auto-Discovery Engine)
+
+    Takes a single highlighted claim (Source A) and automatically discovers:
+    1. Primary supporting sources (e.g. government/scientific papers).
+    2. Mainstream opposing counter-arguments.
+    3. Neutral context reconciliations.
+
+    Cuts research time down from 15 minutes to 3 seconds.
+    """
+    text = (req.claim.text or "").strip()
+    if not text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Source A (Claim) text cannot be empty for auto-corroboration.",
+        )
+    if len(text) < 5:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Claim text must contain at least 5 characters for meaningful corroboration.",
+        )
+
+    chosen_provider = req.provider or x_provider or None
+    logger.info("Auto-corroborating claim (provider=%s): '%s'", chosen_provider or "default", req.claim.title or "untitled")
+
+    try:
+        response = await corroborate_claim(
+            claim=req.claim,
+            api_key_override=x_api_key,
+            provider_override=chosen_provider,
+            search_provider_override=req.search_provider,
+            max_results=req.max_search_results,
+        )
+        return response
+    except LLMConfigurationError as cfg_err:
+        logger.error("Configuration error: %s", cfg_err)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"AI Provider Configuration Error: {str(cfg_err)}",
+        )
+    except HTTPException:
+        raise
+    except ValueError as val_err:
+        logger.error("Validation error during corroboration: %s", val_err)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(val_err),
+        )
+    except Exception as exc:
+        logger.error("Corroboration failed: %s", exc, exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Auto-corroboration failed: {str(exc)}",
+        )
+

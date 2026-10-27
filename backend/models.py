@@ -425,8 +425,68 @@ class CompareResponse(BaseModel):
 
 
 # ---------------------------------------------------------------------------
+# One-Click Corroborator models
+# ---------------------------------------------------------------------------
+
+class CorroborateRequest(BaseModel):
+    """Payload for the /corroborate endpoint (One-Click Corroborator)."""
+    model_config = ConfigDict(extra="ignore")
+
+    claim: ClaimItem = Field(..., description="The single claim passage to corroborate (Source A)")
+    provider: Optional[str] = Field(default=None, description="Explicit LLM provider: 'groq' | 'gemini' | 'openai' | 'anthropic'")
+    model: Optional[str] = Field(default=None, description="Model identifier override")
+    max_search_results: int = Field(default=6, ge=1, le=12, description="Total maximum search sources to retrieve")
+    search_provider: Optional[str] = Field(default=None, description="Search provider override: 'tavily' | 'duckduckgo' | 'brave' | 'serpapi'")
+
+
+class CorroborateResponse(CompareResponse):
+    """
+    Response schema for the One-Click Corroborator (Auto-Discovery Engine).
+    Extends CompareResponse for 100% backward/forward compatibility while adding
+    categorized corroboration evidence.
+    """
+    supporting_sources: List[AdditionalSource] = Field(
+        default_factory=list,
+        description="Primary supporting sources (government, scientific papers, official reports)"
+    )
+    opposing_sources: List[AdditionalSource] = Field(
+        default_factory=list,
+        description="Mainstream opposing counter-arguments, critical reviews, opposing data"
+    )
+    neutral_sources: List[AdditionalSource] = Field(
+        default_factory=list,
+        description="Neutral context reconciliations, nuance analyses, and situational scope"
+    )
+    primary_supporting_evidence: List[str] = Field(
+        default_factory=list,
+        description="Key supporting findings extracted from primary sources"
+    )
+    mainstream_opposing_arguments: List[str] = Field(
+        default_factory=list,
+        description="Key counter-arguments extracted from opposing sources"
+    )
+    context_reconciliations: List[str] = Field(
+        default_factory=list,
+        description="Nuances, timeline factors, or scope distinctions reconciling the tension"
+    )
+    search_provider_used: str = Field(
+        default="duckduckgo",
+        description="Search provider used for discovery (tavily, duckduckgo, etc.)"
+    )
+    auto_discovered: bool = Field(
+        default=True,
+        description="Flag indicating this comparison was produced via Auto-Discovery Engine"
+    )
+    claim_under_test: Optional[ClaimItem] = Field(
+        default=None,
+        description="The original claim submitted for corroboration"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Error model
 # ---------------------------------------------------------------------------
+
 
 class ErrorResponse(BaseModel):
     """Standard error response."""

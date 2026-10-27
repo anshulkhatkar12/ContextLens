@@ -113,12 +113,14 @@
       <span class="contextlens-pill-brand">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block; vertical-align:middle; margin-right:3px;"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>ContextLens
       </span>
+      <button type="button" class="contextlens-pill-btn btn-corroborate" title="One-Click Corroborator: Find Corroborating &amp; Opposing Evidence">Corroborate</button>
       <button type="button" class="contextlens-pill-btn btn-claim" title="Save as Claim (Source A)">+ Claim A</button>
       <button type="button" class="contextlens-pill-btn btn-evidence" title="Save as Evidence (Source B)">+ Evidence B</button>
       <button type="button" class="contextlens-pill-btn btn-open-compare" title="Open Draggable Comparison Window">Compare</button>
       <button type="button" class="contextlens-pill-close" title="Dismiss">&times;</button>
     `;
 
+    const corroborateBtn = floatingPill.querySelector(".btn-corroborate");
     const claimBtn = floatingPill.querySelector(".btn-claim");
     const evidenceBtn = floatingPill.querySelector(".btn-evidence");
     const openCompareBtn = floatingPill.querySelector(".btn-open-compare");
@@ -131,6 +133,18 @@
       url: window.location.href,
       timestamp: new Date().toISOString()
     };
+
+    corroborateBtn.addEventListener("click", (evt) => {
+      evt.stopPropagation();
+      saveCapture("current_claim", "CORROBORATE_CLAIM", payload, "One-Click Corroborator launched!");
+      if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ auto_corroborate_trigger: Date.now() }, () => {
+          toggleFloatingComparisonWindow(true);
+        });
+      } else {
+        toggleFloatingComparisonWindow(true);
+      }
+    });
 
     claimBtn.addEventListener("click", (evt) => {
       evt.stopPropagation();
@@ -209,6 +223,7 @@
       </div>
       <div class="contextlens-badge-content">
         <span class="contextlens-badge-title">ContextLens</span>
+        <button type="button" class="contextlens-badge-btn btn-badge-corroborate" title="Find Corroborating &amp; Opposing Evidence (1-Click)">Corroborate</button>
         <button type="button" class="contextlens-badge-btn btn-badge-claim" title="Capture selected text as Claim A">+ Claim</button>
         <button type="button" class="contextlens-badge-btn btn-badge-evidence" title="Capture selected text as Evidence B">+ Evidence</button>
         <button type="button" class="contextlens-badge-btn btn-badge-open" title="Open Draggable Comparison Window">Compare Window</button>
@@ -216,9 +231,34 @@
     `;
 
     const badgeIcon = floatingBadge.querySelector(".contextlens-badge-icon");
+    const badgeCorroborate = floatingBadge.querySelector(".btn-badge-corroborate");
     const badgeClaim = floatingBadge.querySelector(".btn-badge-claim");
     const badgeEvidence = floatingBadge.querySelector(".btn-badge-evidence");
     const badgeOpen = floatingBadge.querySelector(".btn-badge-open");
+
+    badgeCorroborate.addEventListener("click", (evt) => {
+      evt.stopPropagation();
+      const sel = window.getSelection().toString().trim();
+      if (!sel) {
+        showToast("Please highlight text on the webpage first to corroborate!");
+        return;
+      }
+      const payload = {
+        id: "item_" + Date.now(),
+        text: sel,
+        title: document.title || "Untitled Webpage",
+        url: window.location.href,
+        timestamp: new Date().toISOString()
+      };
+      saveCapture("current_claim", "CORROBORATE_CLAIM", payload, "One-Click Corroborator launched!");
+      if (typeof chrome !== "undefined" && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ auto_corroborate_trigger: Date.now() }, () => {
+          toggleFloatingComparisonWindow(true);
+        });
+      } else {
+        toggleFloatingComparisonWindow(true);
+      }
+    });
 
     // Click on icon directly opens the comparison window
     badgeIcon.addEventListener("click", (evt) => {
