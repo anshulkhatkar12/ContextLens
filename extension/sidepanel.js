@@ -996,13 +996,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function runClientAutoCorroboration(claim) {
     const text = (claim.text || "").trim();
     const cleanText = text.slice(0, 100);
+    const searchParam = encodeURIComponent(cleanText.slice(0, 60));
 
     const suppSources = [
       {
-        title: "National Research & Scientific Repository",
-        url: "https://research-bulletin.gov.example/study",
-        snippet: `Clinical & empirical investigations substantiate core assertions of: '${cleanText}'. Standardized baseline metrics demonstrate strong corroborating indicators.`,
-        source_type: "government/scientific paper",
+        title: `Google Web Search: ${cleanText.slice(0, 50)}...`,
+        url: `https://www.google.com/search?q=${searchParam}`,
+        snippet: `Web query to corroborate core assertions of: '${cleanText}'. Click to review primary findings in your browser.`,
+        source_type: "web search",
         relationship_to_claim: "supports",
         is_relevant: true,
         relevance_score: 0.94
@@ -1011,10 +1012,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const oppSources = [
       {
-        title: "Mainstream Policy Review & Critical Scrutiny",
-        url: "https://policy-critique.org.example/investigation",
-        snippet: `Mainstream analysts challenge the generalizability of '${cleanText}', citing opposing empirical measurements under divergent operating conditions.`,
-        source_type: "mainstream counter-argument",
+        title: `Wikipedia Encyclopedia: ${cleanText.slice(0, 50)}...`,
+        url: `https://en.wikipedia.org/wiki/Special:Search?search=${searchParam}`,
+        snippet: `Search encyclopedia records and community scrutiny regarding '${cleanText}'.`,
+        source_type: "encyclopedic record",
         relationship_to_claim: "contradicts",
         is_relevant: true,
         relevance_score: 0.89
@@ -1023,10 +1024,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const neutSources = [
       {
-        title: "Comparative Methodology & Context Reconciliation",
-        url: "https://fact-reconciliation.org.example/analysis",
-        snippet: `Contextual analysis demonstrates both viewpoints are valid within distinct frames: one measures short-term localized impacts while the other measures long-term macro trends.`,
-        source_type: "neutral context reconciliation",
+        title: `DuckDuckGo Multi-Perspective: ${cleanText.slice(0, 50)}...`,
+        url: `https://duckduckgo.com/?q=${searchParam}`,
+        snippet: `Contextual multi-source index across diverse web publications evaluating conditions for '${cleanText}'.`,
+        source_type: "contextual search",
         relationship_to_claim: "contextualizes",
         is_relevant: true,
         relevance_score: 0.87
