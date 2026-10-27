@@ -20,6 +20,12 @@ import re
 from typing import Any, Dict, Optional
 
 import httpx
+from dotenv import load_dotenv
+
+load_dotenv()
+_backend_env = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_backend_env):
+    load_dotenv(_backend_env)
 
 from .models import CompareResponse
 from .guardrails import (
@@ -41,6 +47,7 @@ LOCAL_LLM_URL         = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST",  "ht
 DEFAULT_GEMINI_MODEL  = os.getenv("GEMINI_MODEL",    "gemini-3.8-flash")
 DEFAULT_OPENAI_MODEL  = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
 DEFAULT_ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-3-haiku-20240307")
+DEFAULT_GROQ_MODEL      = os.getenv("GROQ_MODEL",      "openai/gpt-oss-120b")
 
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
 MAX_INPUT_CHARS = int(os.getenv("MAX_INPUT_CHARS", "8000"))
@@ -594,6 +601,8 @@ def get_configured_provider_name() -> str:
     # Auto-detection priority if LLM_PROVIDER is not set
     if os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"):
         return "gemini"
+    if os.getenv("GROQ_API_KEY"):
+        return "groq"
     if os.getenv("OPENAI_API_KEY"):
         return "openai"
     if os.getenv("ANTHROPIC_API_KEY"):
@@ -620,9 +629,11 @@ def get_llm_model(
     if api_key_override:
         if api_key_override.startswith("sk-ant-"):
             override_provider = "anthropic"
+        elif api_key_override.startswith("gsk_"):
+            override_provider = "groq"
         elif api_key_override.startswith("sk-"):
             override_provider = "openai"
-        elif api_key_override.startswith("AIza") or len(api_key_override) > 20:
+        elif api_key_override.startswith("AIza") or api_key_override.startswith("AQ.") or len(api_key_override) > 20:
             override_provider = "gemini"
             
     if override_provider and not provider_override:
@@ -637,7 +648,7 @@ def get_llm_model(
             raise LLMConfigurationError(
                 "LLM provider is set to 'gemini', but neither GEMINI_API_KEY nor GOOGLE_API_KEY is configured in the environment."
             )
-        model_name = os.getenv("LLM_MODEL") or os.getenv("GEMINI_MODEL") or "gemini-1.5-flash"
+        model_name = os.getenv("LLM_MODEL") or DEFAULT_GEMINI_MODEL
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             chat_model = ChatGoogleGenerativeAI(
@@ -693,12 +704,33 @@ def get_llm_model(
         except ImportError as e:
             raise LLMConfigurationError(f"langchain_anthropic is not installed: {e}")
 
-    # 4. Built-in Deterministic Heuristic Engine
+    # 4. Groq
+    elif provider in ("groq", "groq-cloud"):
+        groq_key = api_key_override or os.getenv("GROQ_API_KEY")
+        if not groq_key:
+            raise LLMConfigurationError(
+                "LLM provider is set to 'groq', but GROQ_API_KEY is not configured in the environment."
+            )
+        model_name = os.getenv("LLM_MODEL") or os.getenv("GROQ_MODEL") or DEFAULT_GROQ_MODEL
+        try:
+            from langchain_groq import ChatGroq
+            chat_model = ChatGroq(
+                model=model_name,
+                api_key=groq_key,
+                temperature=temperature,
+                max_retries=2,
+                request_timeout=25.0
+            )
+            return chat_model, "groq"
+        except ImportError as e:
+            raise LLMConfigurationError(f"langchain_groq is not installed: {e}")
+
+    # 5. Built-in Deterministic Heuristic Engine
     elif provider in ("heuristic", "builtin", "none", ""):
         return None, "heuristic"
 
     else:
         raise LLMConfigurationError(
-            f"Unsupported LLM_PROVIDER '{provider}'. Supported options are: 'gemini', 'openai', 'anthropic', 'heuristic'."
+            f"Unsupported LLM_PROVIDER '{provider}'. Supported options are: 'gemini', 'groq', 'openai', 'anthropic', 'heuristic'."
         )
 

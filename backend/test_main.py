@@ -26,11 +26,13 @@ from unittest.mock import AsyncMock, patch, MagicMock
 from fastapi.testclient import TestClient
 
 # Ensure no real API calls can be made during tests
-os.environ.setdefault("GEMINI_API_KEY",    "")
-os.environ.setdefault("OPENAI_API_KEY",    "")
-os.environ.setdefault("ANTHROPIC_API_KEY", "")
-os.environ.setdefault("SERPAPI_KEY",       "")
-os.environ.setdefault("BRAVE_SEARCH_KEY",  "")
+os.environ["GEMINI_API_KEY"] = ""
+os.environ["GROQ_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = ""
+os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["SERPAPI_KEY"] = ""
+os.environ["BRAVE_SEARCH_KEY"] = ""
+os.environ["LLM_PROVIDER"] = ""
 
 from backend.main import app
 from backend.models import CompareResponse, AdditionalSource

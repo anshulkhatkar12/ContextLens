@@ -13,6 +13,9 @@ from .source_evaluator import filter_and_rank_sources
 
 # Load environment variables from .env
 load_dotenv()
+_backend_env = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_backend_env):
+    load_dotenv(_backend_env)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -74,6 +77,7 @@ def read_root():
 def health_check():
     provider = get_configured_provider_name()
     has_gemini    = bool(os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY"))
+    has_groq      = bool(os.getenv("GROQ_API_KEY"))
     has_openai    = bool(os.getenv("OPENAI_API_KEY"))
     has_anthropic = bool(os.getenv("ANTHROPIC_API_KEY"))
     has_serpapi   = bool(os.getenv("SERPAPI_KEY"))
@@ -85,11 +89,17 @@ def health_check():
     local_model   = os.getenv("LOCAL_MODEL", os.getenv("OLLAMA_MODEL", "qwen2.5:latest"))
     local_url     = os.getenv("LOCAL_LLM_URL", os.getenv("OLLAMA_HOST", "http://localhost:11434"))
 
-    if llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_openai or has_anthropic)):
+    if llm_provider in ("local", "qwen", "ollama") or (use_local and not (has_gemini or has_groq or has_openai or has_anthropic)):
         engine_name = f"Local Qwen ({local_model}) [No API Key Required]"
+        llm_active = True
+    elif llm_provider == "groq" or (has_groq and not (has_gemini or has_openai or has_anthropic)):
+        engine_name = "Groq (via LangChain)"
         llm_active = True
     elif has_gemini:
         engine_name = "Google Gemini (via LangChain)"
+        llm_active = True
+    elif has_groq:
+        engine_name = "Groq (via LangChain)"
         llm_active = True
     elif has_openai:
         engine_name = "OpenAI GPT (via LangChain)"
@@ -120,7 +130,7 @@ def health_check():
         "api_version": "2.0.0",
         "engine": engine_name,
         "llm_provider": provider,
-        "llm_configured": llm_active or (has_gemini or has_openai or has_anthropic),
+        "llm_configured": llm_active or (has_gemini or has_groq or has_openai or has_anthropic),
         "local_model": local_model,
         "local_endpoint": local_url,
         "guardrails_enabled": True,
